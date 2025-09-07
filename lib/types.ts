@@ -26,3 +26,4 @@ export function unbrand<T, TBrand extends string>(
 export type UserId = Brand<string, "UserId">;
 export type PostId = Brand<string, "PostId">;
 export type SessionId = Brand<string, "SessionId">;
+export type FileId = Brand<string, "FileId">;

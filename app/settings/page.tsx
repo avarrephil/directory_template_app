@@ -5,7 +5,7 @@ export default function SettingsPage() {
         <h2 className="text-xl font-semibold text-gray-900 mb-6">
           Directory Settings
         </h2>
-        
+
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -17,9 +17,11 @@ export default function SettingsPage() {
                 placeholder="e.g., Local Restaurants Guide"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
-              <p className="text-xs text-gray-500 mt-1">TODO: Implement setting persistence</p>
+              <p className="text-xs text-gray-500 mt-1">
+                TODO: Implement setting persistence
+              </p>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Business Category
@@ -35,7 +37,7 @@ export default function SettingsPage() {
               </select>
             </div>
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Directory Description
@@ -46,7 +48,7 @@ export default function SettingsPage() {
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
-          
+
           <div>
             <h3 className="text-lg font-medium text-gray-900 mb-4">
               AI Processing Settings
@@ -84,7 +86,7 @@ export default function SettingsPage() {
               </label>
             </div>
           </div>
-          
+
           <div className="pt-4 border-t border-gray-200">
             <button
               type="button"
@@ -92,7 +94,9 @@ export default function SettingsPage() {
             >
               Save Settings
             </button>
-            <p className="text-xs text-gray-500 mt-2">TODO: Implement settings save functionality</p>
+            <p className="text-xs text-gray-500 mt-2">
+              TODO: Implement settings save functionality
+            </p>
           </div>
         </div>
       </div>

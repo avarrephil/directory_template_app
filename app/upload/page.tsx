@@ -1,58 +1,35 @@
-'use client'
+"use client";
 
-import { useState } from 'react';
-import FileUpload from '@/app/components/file-upload';
-import UploadedFilesList from '@/app/components/uploaded-files-list';
-import { UploadedFile } from '@/app/types';
-
-// Mock data for demonstration
-const mockUploadedFiles: UploadedFile[] = [
-  {
-    id: '1',
-    name: 'restaurants_downtown.csv',
-    size: 2456789,
-    uploadedAt: new Date('2024-01-15T10:30:00'),
-    status: 'completed',
-  },
-  {
-    id: '2',
-    name: 'cafes_midtown.csv',
-    size: 1234567,
-    uploadedAt: new Date('2024-01-14T14:20:00'),
-    status: 'processing',
-  },
-  {
-    id: '3',
-    name: 'bakeries_uptown.csv',
-    size: 987654,
-    uploadedAt: new Date('2024-01-13T09:15:00'),
-    status: 'error',
-  },
-];
+import { useState } from "react";
+import FileUpload from "@/app/components/file-upload";
+import UploadedFilesList from "@/app/components/uploaded-files-list";
+import type { FileUploadResult } from "@/lib/supabase-client";
+import type { FileId } from "@/lib/types";
 
 export default function UploadPage() {
-  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>(mockUploadedFiles);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  const handleFilesSelected = (files: File[]) => {
-    // TODO: Implement actual file upload logic
-    console.log('Selected files:', files);
-    
-    // Mock: Add files to the uploaded files list
-    const newFiles: UploadedFile[] = files.map((file) => ({
-      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-      name: file.name,
-      size: file.size,
-      uploadedAt: new Date(),
-      status: 'uploaded',
-    }));
+  const handleFilesUploaded = (results: FileUploadResult[]) => {
+    console.log("Upload results:", results);
 
-    setUploadedFiles(prev => [...newFiles, ...prev]);
+    // Trigger refresh of uploaded files list
+    setRefreshTrigger((prev) => prev + 1);
+
+    // Show summary of results
+    const successful = results.filter((r) => r.success).length;
+    const failed = results.filter((r) => !r.success).length;
+
+    if (successful > 0) {
+      console.log(`Successfully uploaded ${successful} file(s)`);
+    }
+    if (failed > 0) {
+      console.log(`Failed to upload ${failed} file(s)`);
+    }
   };
 
-  const handleDeleteFile = (fileId: string) => {
-    // TODO: Implement actual file deletion logic
-    console.log('Delete file:', fileId);
-    setUploadedFiles(prev => prev.filter(file => file.id !== fileId));
+  const handleDeleteFile = (fileId: FileId) => {
+    console.log("File deleted:", fileId);
+    // File list will automatically refresh via the component
   };
 
   return (
@@ -63,17 +40,18 @@ export default function UploadPage() {
             Upload CSV Files
           </h2>
           <p className="text-gray-600">
-            Upload your business directory CSV files containing Google Maps data. 
-            Files will be processed and cleaned with AI before being added to your directory.
+            Upload your business directory CSV files containing Google Maps
+            data. Files will be processed and cleaned with AI before being added
+            to your directory.
           </p>
         </div>
-        
-        <FileUpload onFilesSelected={handleFilesSelected} />
+
+        <FileUpload onFilesUploaded={handleFilesUploaded} />
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <UploadedFilesList 
-          files={uploadedFiles} 
+        <UploadedFilesList
+          refreshTrigger={refreshTrigger}
           onDeleteFile={handleDeleteFile}
         />
       </div>
@@ -89,14 +67,14 @@ export default function UploadPage() {
             </h3>
             <div className="mt-2 text-sm text-blue-700">
               <p>
-                Uploaded files will be automatically processed with AI to clean and enrich the data 
-                before being saved to your production directory. This includes:
+                Uploaded files are securely stored and their metadata tracked in
+                the database. The current implementation includes:
               </p>
               <ul className="list-disc pl-5 mt-2 space-y-1">
-                <li>Data validation and formatting</li>
-                <li>Business information enrichment</li>
-                <li>Duplicate detection and removal</li>
-                <li>Category standardization</li>
+                <li>Secure file storage in cloud storage</li>
+                <li>Real-time upload progress tracking</li>
+                <li>File validation and error handling</li>
+                <li>Database synchronization</li>
               </ul>
             </div>
           </div>

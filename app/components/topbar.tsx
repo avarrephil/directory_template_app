@@ -1,17 +1,17 @@
-'use client'
+"use client";
 
-import { usePathname } from 'next/navigation';
+import { usePathname } from "next/navigation";
 
 const getPageTitle = (pathname: string): string => {
-  if (pathname === '/upload') return 'Upload Files';
-  if (pathname === '/settings') return 'Settings';
-  return 'Dashboard';
+  if (pathname === "/upload") return "Upload Files";
+  if (pathname === "/settings") return "Settings";
+  return "Dashboard";
 };
 
 const getPageDescription = (pathname: string): string => {
-  if (pathname === '/upload') return 'Upload and manage your CSV data files';
-  if (pathname === '/settings') return 'Configure your directory settings';
-  return 'Welcome to your business directory admin panel';
+  if (pathname === "/upload") return "Upload and manage your CSV data files";
+  if (pathname === "/settings") return "Configure your directory settings";
+  return "Welcome to your business directory admin panel";
 };
 
 export default function Topbar() {
@@ -28,11 +28,11 @@ export default function Topbar() {
         </div>
         <div className="flex items-center space-x-4">
           <div className="text-sm text-gray-500">
-            {new Date().toLocaleDateString('en-US', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
+            {new Date().toLocaleDateString("en-US", {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
             })}
           </div>
           <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">

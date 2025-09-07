@@ -1,9 +1,12 @@
+import type { FileId } from "@/lib/types";
+
 export interface UploadedFile {
-  id: string;
+  id: FileId;
   name: string;
   size: number;
   uploadedAt: Date;
-  status: 'uploaded' | 'processing' | 'completed' | 'error';
+  status: "uploaded" | "error";
+  storage_path?: string;
 }
 
 export interface NavigationItem {

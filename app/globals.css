@@ -25,7 +25,11 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  font-family:
+    var(--font-geist-sans),
+    system-ui,
+    -apple-system,
+    sans-serif;
   line-height: 1.6;
 }
 
@@ -35,22 +39,33 @@ body {
 }
 
 /* Ensure all text is readable in light mode */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   color: var(--gray-900);
 }
 
-p, span, div {
+p,
+span,
+div {
   color: var(--gray-800);
 }
 
 /* Form elements */
-input, select, textarea {
+input,
+select,
+textarea {
   background: white;
   color: var(--gray-900);
   border-color: var(--gray-300);
 }
 
-input:focus, select:focus, textarea:focus {
+input:focus,
+select:focus,
+textarea:focus {
   outline: none;
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);

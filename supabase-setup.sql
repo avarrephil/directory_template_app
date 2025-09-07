@@ -29,21 +29,21 @@ CREATE TRIGGER update_uploaded_files_updated_at
 
 -- Create storage bucket for CSV files
 INSERT INTO storage.buckets (id, name, public)
-VALUES ('csv-files', 'csv-files', false)
+VALUES ('csv_files', 'csv_files', false)
 ON CONFLICT (id) DO NOTHING;
 
 -- Set up storage policies
 -- Allow authenticated users to upload files
 CREATE POLICY "Allow file uploads" ON storage.objects
-FOR INSERT WITH CHECK (bucket_id = 'csv-files');
+FOR INSERT WITH CHECK (bucket_id = 'csv_files');
 
 -- Allow authenticated users to view their uploaded files
 CREATE POLICY "Allow file downloads" ON storage.objects
-FOR SELECT USING (bucket_id = 'csv-files');
+FOR SELECT USING (bucket_id = 'csv_files');
 
 -- Allow authenticated users to delete their files
 CREATE POLICY "Allow file deletions" ON storage.objects
-FOR DELETE USING (bucket_id = 'csv-files');
+FOR DELETE USING (bucket_id = 'csv_files');
 
 -- Create indexes for better query performance
 CREATE INDEX IF NOT EXISTS idx_uploaded_files_status ON uploaded_files(status);

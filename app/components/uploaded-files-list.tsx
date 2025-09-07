@@ -1,55 +1,140 @@
-'use client'
+"use client";
 
-import { UploadedFile } from '@/app/types';
+import { useState, useEffect } from "react";
+import { UploadedFile } from "@/app/types";
+import type { FileId } from "@/lib/types";
+import { fetchUploadedFiles, deleteFileRecord } from "@/lib/supabase-client";
 
 interface UploadedFilesListProps {
-  files: UploadedFile[];
-  onDeleteFile: (fileId: string) => void;
+  refreshTrigger?: number;
+  onDeleteFile?: (fileId: FileId) => void;
 }
 
 const formatFileSize = (bytes: number): string => {
-  if (bytes === 0) return '0 Bytes';
+  if (bytes === 0) return "0 Bytes";
   const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const sizes = ["Bytes", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
 };
 
 const formatDateTime = (date: Date): string => {
-  return new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
+  return new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
     hour12: true,
   }).format(date);
 };
 
-const getStatusColor = (status: UploadedFile['status']): string => {
+const getStatusColor = (status: UploadedFile["status"]): string => {
   switch (status) {
-    case 'uploaded':
-      return 'bg-blue-100 text-blue-800';
-    case 'processing':
-      return 'bg-yellow-100 text-yellow-800';
-    case 'completed':
-      return 'bg-green-100 text-green-800';
-    case 'error':
-      return 'bg-red-100 text-red-800';
+    case "uploaded":
+      return "bg-green-100 text-green-800";
+    case "error":
+      return "bg-red-100 text-red-800";
     default:
-      return 'bg-gray-100 text-gray-800';
+      return "bg-gray-100 text-gray-800";
   }
 };
 
-export default function UploadedFilesList({ files, onDeleteFile }: UploadedFilesListProps) {
+export default function UploadedFilesList({
+  refreshTrigger,
+  onDeleteFile,
+}: UploadedFilesListProps) {
+  const [files, setFiles] = useState<UploadedFile[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<Record<string, boolean>>({});
+
+  const loadFiles = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await fetchUploadedFiles();
+      if (result.success && result.files) {
+        setFiles(result.files);
+      } else {
+        setError(result.error || "Failed to load files");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load files");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadFiles();
+  }, [refreshTrigger]);
+
+  const handleDeleteFile = async (fileId: FileId) => {
+    if (deleting[fileId]) return;
+
+    setDeleting((prev) => ({ ...prev, [fileId]: true }));
+
+    try {
+      const result = await deleteFileRecord(fileId);
+      if (result.success) {
+        setFiles((prev) => prev.filter((file) => file.id !== fileId));
+        onDeleteFile?.(fileId);
+      } else {
+        setError(result.error || "Failed to delete file");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete file");
+    } finally {
+      setDeleting((prev) => ({ ...prev, [fileId]: false }));
+    }
+  };
+  if (loading) {
+    return (
+      <div className="text-center py-12">
+        <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+          <div className="animate-spin w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+        </div>
+        <h3 className="text-lg font-medium text-gray-900 mb-1">
+          Loading files...
+        </h3>
+        <p className="text-gray-600">Fetching your uploaded files.</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+          <span className="text-2xl">⚠️</span>
+        </div>
+        <h3 className="text-lg font-medium text-gray-900 mb-1">
+          Error loading files
+        </h3>
+        <p className="text-gray-600 mb-4">{error}</p>
+        <button
+          onClick={loadFiles}
+          className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        >
+          Try Again
+        </button>
+      </div>
+    );
+  }
+
   if (files.length === 0) {
     return (
       <div className="text-center py-12">
         <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
           <span className="text-2xl">📄</span>
         </div>
-        <h3 className="text-lg font-medium text-gray-900 mb-1">No files uploaded</h3>
-        <p className="text-gray-600">Upload CSV files to get started with your directory.</p>
+        <h3 className="text-lg font-medium text-gray-900 mb-1">
+          No files uploaded
+        </h3>
+        <p className="text-gray-600">
+          Upload CSV files to get started with your directory.
+        </p>
       </div>
     );
   }
@@ -60,9 +145,12 @@ export default function UploadedFilesList({ files, onDeleteFile }: UploadedFiles
         <h2 className="text-lg font-semibold text-gray-900">
           Uploaded Files ({files.length})
         </h2>
-        <p className="text-sm text-gray-600">
-          TODO: Add bulk actions (select all, delete selected)
-        </p>
+        <button
+          onClick={loadFiles}
+          className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        >
+          🔄 Refresh
+        </button>
       </div>
 
       <div className="bg-white shadow overflow-hidden sm:rounded-md">
@@ -104,7 +192,7 @@ export default function UploadedFilesList({ files, onDeleteFile }: UploadedFiles
                     type="button"
                     onClick={() => {
                       // TODO: Implement view/download functionality
-                      console.log('View file:', file.name);
+                      console.log("View file:", file.name);
                     }}
                     className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                   >
@@ -112,10 +200,12 @@ export default function UploadedFilesList({ files, onDeleteFile }: UploadedFiles
                   </button>
                   <button
                     type="button"
-                    onClick={() => onDeleteFile(file.id)}
-                    className="inline-flex items-center px-3 py-1.5 border border-red-300 shadow-sm text-xs font-medium rounded text-red-700 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                    onClick={() => handleDeleteFile(file.id)}
+                    disabled={deleting[file.id]}
+                    className="inline-flex items-center px-3 py-1.5 border border-red-300 shadow-sm text-xs font-medium rounded text-red-700 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    🗑️ Delete
+                    {deleting[file.id] ? "⏳" : "🗑️"}{" "}
+                    {deleting[file.id] ? "Deleting..." : "Delete"}
                   </button>
                 </div>
               </div>
@@ -125,9 +215,9 @@ export default function UploadedFilesList({ files, onDeleteFile }: UploadedFiles
       </div>
 
       <div className="text-xs text-gray-500">
-        <p>TODO: Implement file processing status updates</p>
-        <p>TODO: Add file preview functionality</p>
-        <p>TODO: Implement actual delete functionality</p>
+        <p>Files are stored securely in cloud storage</p>
+        <p>Refresh automatically syncs with latest data</p>
+        <p>Delete removes both file and storage data</p>
       </div>
     </div>
   );
