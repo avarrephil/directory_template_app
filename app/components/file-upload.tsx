@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import {
   uploadFile,
   type FileUploadResult,
@@ -21,6 +21,8 @@ export default function FileUpload({ onFilesUploaded }: FileUploadProps) {
   const [uploadProgress, setUploadProgress] = useState<Record<string, number>>(
     {}
   );
+  const [activeUploads, setActiveUploads] = useState(0);
+  const currentErrorsRef = useRef<string[]>([]);
 
   const processFiles = useCallback(
     async (files: FileList) => {
@@ -36,38 +38,84 @@ export default function FileUpload({ onFilesUploaded }: FileUploadProps) {
       setUploading(true);
       setErrors([]);
       setUploadProgress({});
+      setActiveUploads(fileArray.length);
+      currentErrorsRef.current = [];
 
-      const results: FileUploadResult[] = [];
-      const currentErrors: string[] = [];
+      fileArray.forEach((file) => {
+        uploadFile(file, {
+          onProgress: (progress: FileUploadProgress) => {
+            setUploadProgress((prev) => ({
+              ...prev,
+              [file.name]: progress.percentage,
+            }));
+          },
+        })
+          .then((result) => {
+            // Remove completed file from progress display immediately
+            setUploadProgress((prev) => {
+              const { [file.name]: _removed, ...rest } = prev;
+              return rest;
+            });
 
-      for (const file of fileArray) {
-        try {
-          const result = await uploadFile(file, {
-            onProgress: (progress: FileUploadProgress) => {
-              setUploadProgress((prev) => ({
-                ...prev,
-                [file.name]: progress.percentage,
-              }));
-            },
+            if (result.success) {
+              // Trigger refresh of uploaded files list immediately after successful upload
+              onFilesUploaded([result]);
+            } else {
+              currentErrorsRef.current.push(`${file.name}: ${result.error}`);
+            }
+
+            // Decrement active uploads counter
+            setActiveUploads((prev) => {
+              const newCount = prev - 1;
+              if (newCount === 0) {
+                setUploading(false);
+                setErrors(currentErrorsRef.current);
+
+                // Final call to handle any remaining errors
+                if (currentErrorsRef.current.length > 0) {
+                  onFilesUploaded(
+                    currentErrorsRef.current.map((error) => ({
+                      success: false,
+                      error,
+                    }))
+                  );
+                }
+              }
+              return newCount;
+            });
+          })
+          .catch((error) => {
+            // Remove failed file from progress display
+            setUploadProgress((prev) => {
+              const { [file.name]: _removed, ...rest } = prev;
+              return rest;
+            });
+
+            const errorMsg =
+              error instanceof Error ? error.message : "Unknown error";
+            currentErrorsRef.current.push(`${file.name}: ${errorMsg}`);
+
+            // Decrement active uploads counter
+            setActiveUploads((prev) => {
+              const newCount = prev - 1;
+              if (newCount === 0) {
+                setUploading(false);
+                setErrors(currentErrorsRef.current);
+
+                // Final call to handle any remaining errors
+                if (currentErrorsRef.current.length > 0) {
+                  onFilesUploaded(
+                    currentErrorsRef.current.map((error) => ({
+                      success: false,
+                      error,
+                    }))
+                  );
+                }
+              }
+              return newCount;
+            });
           });
-
-          results.push(result);
-
-          if (!result.success) {
-            currentErrors.push(`${file.name}: ${result.error}`);
-          }
-        } catch (error) {
-          const errorMsg =
-            error instanceof Error ? error.message : "Unknown error";
-          currentErrors.push(`${file.name}: ${errorMsg}`);
-          results.push({ success: false, error: errorMsg });
-        }
-      }
-
-      setErrors(currentErrors);
-      setUploading(false);
-      setUploadProgress({});
-      onFilesUploaded(results);
+      });
     },
     [uploading, onFilesUploaded]
   );
@@ -140,7 +188,7 @@ export default function FileUpload({ onFilesUploaded }: FileUploadProps) {
           <div>
             <p className="text-lg font-medium text-gray-900">
               {uploading
-                ? "Uploading files..."
+                ? `Uploading files... (${activeUploads} remaining)`
                 : "Drop CSV files here or click to browse"}
             </p>
             <p className="text-sm text-gray-600 mt-1">

@@ -29,7 +29,7 @@ type SupabaseFileRecord = {
 
 const isValidFileRecord = (obj: unknown): obj is SupabaseFileRecord => {
   if (obj === null || typeof obj !== "object") return false;
-  
+
   const record = obj as Record<string, unknown>;
   return (
     typeof record.id === "string" &&
@@ -375,25 +375,43 @@ export const uploadFile = async (
   const storagePath = generateUniqueFilePath(file.name);
 
   try {
-    const uploadResult = await uploadFileToStorage(file, storagePath, options);
-    if (!uploadResult.success) {
-      return { success: false, error: uploadResult.error };
-    }
-
-    const fileData: Omit<UploadedFile, "id"> = {
+    // Create database record with "uploading" status first
+    const initialFileData: Omit<UploadedFile, "id"> = {
       name: file.name,
       size: file.size,
       uploadedAt: new Date(),
-      status: "uploaded",
+      status: "uploading",
       storage_path: storagePath,
     };
 
-    const insertResult = await insertFileRecord(fileData);
+    const insertResult = await insertFileRecord(initialFileData);
     if (!insertResult.success) {
       return { success: false, error: insertResult.error };
     }
 
-    return { success: true, file: insertResult.file };
+    const fileId = insertResult.file!.id;
+
+    // Upload to storage
+    const uploadResult = await uploadFileToStorage(file, storagePath, options);
+    if (!uploadResult.success) {
+      // Update status to failed
+      await updateFileStatus(fileId, "failed");
+      return { success: false, error: uploadResult.error };
+    }
+
+    // Update status to uploaded
+    const updateResult = await updateFileStatus(fileId, "uploaded");
+    if (!updateResult.success) {
+      return { success: false, error: updateResult.error };
+    }
+
+    // Return file with updated status
+    const updatedFile: UploadedFile = {
+      ...insertResult.file!,
+      status: "uploaded",
+    };
+
+    return { success: true, file: updatedFile };
   } catch (error) {
     return {
       success: false,
