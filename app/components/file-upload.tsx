@@ -53,7 +53,8 @@ export default function FileUpload({ onFilesUploaded }: FileUploadProps) {
           .then((result) => {
             // Remove completed file from progress display immediately
             setUploadProgress((prev) => {
-              const { [file.name]: _removed, ...rest } = prev;
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
+              const { [file.name]: _, ...rest } = prev;
               return rest;
             });
 
@@ -87,7 +88,8 @@ export default function FileUpload({ onFilesUploaded }: FileUploadProps) {
           .catch((error) => {
             // Remove failed file from progress display
             setUploadProgress((prev) => {
-              const { [file.name]: _removed, ...rest } = prev;
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
+              const { [file.name]: _, ...rest } = prev;
               return rest;
             });
 
