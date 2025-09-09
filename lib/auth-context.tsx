@@ -36,24 +36,39 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [lastAuthCheck, setLastAuthCheck] = useState<number>(0);
   const router = useRouter();
 
-  const refreshAuth = async () => {
+  const refreshAuth = async (force: boolean = false) => {
+    // Don't refresh if we just checked recently (unless forced)
+    const now = Date.now();
+    if (!force && lastAuthCheck > 0 && now - lastAuthCheck < 30000) { // 30 seconds
+      console.log("⏭️ AuthProvider: Skipping auth refresh (recent check)");
+      setLoading(false);
+      return;
+    }
+
     try {
+      console.log("🔄 AuthProvider: Starting refreshAuth...");
       setLoading(true);
+      console.log("📡 AuthProvider: Calling getCurrentUser...");
       const result = await getCurrentUser();
+      console.log("📡 AuthProvider: getCurrentUser result:", result);
       if (result.success) {
         setUser(result.user || null);
         setProfile(result.profile || null);
+        setLastAuthCheck(now);
       } else {
+        console.log("❌ AuthProvider: getCurrentUser failed:", result.error);
         setUser(null);
         setProfile(null);
       }
     } catch (error) {
-      console.error("Auth refresh error:", error);
+      console.error("❌ AuthProvider: Auth refresh error:", error);
       setUser(null);
       setProfile(null);
     } finally {
+      console.log("✅ AuthProvider: Setting loading to false");
       setLoading(false);
     }
   };
@@ -124,6 +139,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("🔄 Auth state change:", event);
       if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
         if (session?.user) {
           const result = await getCurrentUser();
@@ -133,6 +149,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           }
         }
       } else if (event === "SIGNED_OUT") {
+        console.log("👋 User signed out");
         setUser(null);
         setProfile(null);
       }

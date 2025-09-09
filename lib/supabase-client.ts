@@ -563,25 +563,45 @@ export const signOut = async (): Promise<{
 
 export const getCurrentUser = async (): Promise<AuthResult> => {
   try {
+    console.log("🔍 getCurrentUser: Starting...");
     const supabase = getSupabaseClient();
+    console.log("🔍 getCurrentUser: Got Supabase client");
+    
+    // Add timeout to prevent hanging (increased to 15 seconds for better UX)
+    const timeoutPromise = new Promise<{data: {user: null}, error: null}>((resolve) => {
+      setTimeout(() => {
+        console.log("⏰ getCurrentUser: Auth timed out, returning no user");
+        resolve({data: {user: null}, error: null});
+      }, 15000);
+    });
+
+    const authPromise = supabase.auth.getUser();
+    
     const {
       data: { user },
       error,
-    } = await supabase.auth.getUser();
+    } = await Promise.race([authPromise, timeoutPromise]);
+    
+    console.log("🔍 getCurrentUser: Got user from Supabase", { user: !!user, error });
 
     if (error) {
+      console.log("❌ getCurrentUser: Supabase auth error:", error.message);
       return { success: false, error: error.message };
     }
 
     if (user) {
+      console.log("🔍 getCurrentUser: User found, getting profile...");
       const profileResult = await getUserProfile(user.id);
+      console.log("🔍 getCurrentUser: Profile result:", profileResult);
       if (profileResult.success) {
         return { success: true, user, profile: profileResult.profile };
       }
     }
 
+    console.log("🔍 getCurrentUser: No user found, returning success with null user");
     return { success: true, user };
   } catch (error) {
+    console.error("❌ getCurrentUser: Exception:", error);
     return {
       success: false,
       error:

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { UploadedFile } from "@/app/types";
 import type { FileId } from "@/lib/types";
 import { fetchUploadedFiles, deleteFileRecord } from "@/lib/supabase-client";
+import CSVViewerModal from "./csv-viewer-modal";
 
 interface UploadedFilesListProps {
   refreshTrigger?: number;
@@ -50,6 +51,10 @@ export default function UploadedFilesList({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<Record<string, boolean>>({});
+  const [viewingFile, setViewingFile] = useState<{
+    id: FileId;
+    name: string;
+  } | null>(null);
 
   const loadFiles = async () => {
     setLoading(true);
@@ -193,8 +198,7 @@ export default function UploadedFilesList({
                   <button
                     type="button"
                     onClick={() => {
-                      // TODO: Implement view/download functionality
-                      console.log("View file:", file.name);
+                      setViewingFile({ id: file.id, name: file.name });
                     }}
                     className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                   >
@@ -221,6 +225,15 @@ export default function UploadedFilesList({
         <p>Refresh automatically syncs with latest data</p>
         <p>Delete removes both file and storage data</p>
       </div>
+
+      {/* CSV Viewer Modal */}
+      {viewingFile && (
+        <CSVViewerModal
+          fileId={viewingFile.id}
+          fileName={viewingFile.name}
+          onClose={() => setViewingFile(null)}
+        />
+      )}
     </div>
   );
 }
