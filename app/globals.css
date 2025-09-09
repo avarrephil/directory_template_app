@@ -84,3 +84,19 @@ a {
 a:hover {
   color: #1d4ed8;
 }
+
+/* Hide Next.js development indicator */
+[data-nextjs-toast-errors-parent] {
+  display: none !important;
+}
+
+[data-turbopack-toast-errors-parent] {
+  display: none !important;
+}
+
+/* Additional selectors for Next.js dev indicators */
+[data-nextjs-dialog-overlay],
+[data-nextjs-dialog-left-right-dialog],
+turbopack-mini-overlay {
+  display: none !important;
+}
