@@ -12,6 +12,7 @@ const adminNavigation: NavigationItem[] = [
 ];
 
 const userNavigation: NavigationItem[] = [
+  { name: "Home", href: "/user-dashboard", current: false },
   { name: "Settings", href: "/settings", current: false },
 ];
 
@@ -60,7 +61,7 @@ export default function Sidebar() {
                 `}
               >
                 <span className="mr-3 text-lg">
-                  {item.name === "Upload" ? "📤" : "⚙️"}
+                  {item.name === "Upload" ? "📤" : item.name === "Home" ? "🏠" : "⚙️"}
                 </span>
                 {item.name}
               </Link>

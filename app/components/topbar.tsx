@@ -11,7 +11,7 @@ const getPageTitle = (pathname: string): string => {
 const getPageDescription = (pathname: string): string => {
   if (pathname === "/upload") return "Upload and manage your CSV data files";
   if (pathname === "/settings") return "Configure your directory settings";
-  return "Welcome to your business directory admin panel";
+  return "Welcome to your business directory user panel";
 };
 
 export default function Topbar() {

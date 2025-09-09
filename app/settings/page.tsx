@@ -1,6 +1,9 @@
+import ProtectedRoute from "@/lib/protected-route";
+
 export default function SettingsPage() {
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-8">
+    <ProtectedRoute>
+      <div className="max-w-4xl mx-auto p-6 space-y-8">
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <h2 className="text-xl font-semibold text-gray-900 mb-6">
           Directory Settings
@@ -100,6 +103,7 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }
