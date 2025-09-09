@@ -2,38 +2,51 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { resetPassword } from "@/lib/supabase-client";
+import { useRouter, useSearchParams } from "next/navigation";
+import { updatePassword } from "@/lib/supabase-client";
 
-export default function ForgotPasswordPage() {
-  const [email, setEmail] = useState("");
+export default function ResetPasswordPage() {
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
-    if (success) {
-      // Redirect to login page after 5 seconds
-      const timer = setTimeout(() => {
-        router.push("/login");
-      }, 5000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [success, router]);
+    // Supabase sends different parameters in the reset link
+    // We don't need to validate specific parameters here since Supabase handles the session
+    // The user will be automatically authenticated when they click the reset link
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
-    const result = await resetPassword(email);
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      setLoading(false);
+      return;
+    }
+
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters long");
+      setLoading(false);
+      return;
+    }
+
+    const result = await updatePassword(password);
 
     if (result.success) {
       setSuccess(true);
+      // Redirect to login after 3 seconds
+      setTimeout(() => {
+        router.push("/login");
+      }, 3000);
     } else {
-      setError(result.error || "Failed to send reset email");
+      setError(result.error || "Failed to update password");
     }
 
     setLoading(false);
@@ -45,10 +58,10 @@ export default function ForgotPasswordPage() {
         <div className="sm:mx-auto sm:w-full sm:max-w-md">
           <div className="text-center">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Check your email
+              Password Updated!
             </h1>
             <p className="text-sm text-gray-600">
-              We&apos;ve sent a password reset link to your email address.
+              Your password has been successfully updated.
             </p>
           </div>
         </div>
@@ -57,13 +70,9 @@ export default function ForgotPasswordPage() {
           <div className="bg-white py-8 px-4 shadow-sm border border-gray-200 rounded-lg sm:px-10 text-center">
             <div className="mb-6">
               <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                <span className="text-2xl">✉️</span>
+                <span className="text-2xl">✅</span>
               </div>
               <p className="text-sm text-gray-600 mb-4">
-                Please check your email and click the link to reset your
-                password.
-              </p>
-              <p className="text-xs text-gray-500">
                 You will be redirected to the login page in a few seconds.
               </p>
             </div>
@@ -87,11 +96,10 @@ export default function ForgotPasswordPage() {
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Forgot your password?
+            Reset your password
           </h1>
           <p className="text-sm text-gray-600">
-            Enter your email address and we&apos;ll send you a link to reset
-            your password.
+            Enter your new password below.
           </p>
         </div>
       </div>
@@ -114,23 +122,44 @@ export default function ForgotPasswordPage() {
 
             <div>
               <label
-                htmlFor="email"
+                htmlFor="password"
                 className="block text-sm font-medium text-gray-700"
               >
-                Email Address
+                New Password
               </label>
               <div className="mt-1">
                 <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
+                  id="password"
+                  name="password"
+                  type="password"
                   required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   disabled={loading}
                   className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                  placeholder="you@example.com"
+                  placeholder="••••••••"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label
+                htmlFor="confirmPassword"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Confirm New Password
+              </label>
+              <div className="mt-1">
+                <input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  disabled={loading}
+                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  placeholder="••••••••"
                 />
               </div>
             </div>
@@ -141,7 +170,7 @@ export default function ForgotPasswordPage() {
                 disabled={loading}
                 className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? "Sending..." : "Send Reset Link"}
+                {loading ? "Updating..." : "Update Password"}
               </button>
             </div>
 

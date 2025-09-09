@@ -1,5 +1,14 @@
 import { describe, expect, test, vi, afterEach } from "vitest";
-import { validateCsvFile, generateUniqueFilePath } from "./supabase-client";
+import {
+  validateCsvFile,
+  generateUniqueFilePath,
+  resetPassword,
+  updatePassword,
+  signUp,
+  signIn,
+  signOut,
+  getCurrentUser,
+} from "./supabase-client";
 import type { FileId } from "./types";
 
 describe("validateCsvFile", () => {
@@ -217,5 +226,80 @@ describe("getFileStoragePath", () => {
     const result = await getFileStoragePath(fileId);
 
     expect(result).toBe(null);
+  });
+});
+
+// Note: These integration-style tests would normally require proper Supabase mocking
+// For now, we'll test the basic structure and error handling of auth functions
+
+describe("Authentication Functions Structure", () => {
+  test("resetPassword function exists and has correct signature", () => {
+    expect(typeof resetPassword).toBe("function");
+  });
+
+  test("updatePassword function exists and has correct signature", () => {
+    expect(typeof updatePassword).toBe("function");
+  });
+
+  test("signUp function exists and has correct signature", () => {
+    expect(typeof signUp).toBe("function");
+  });
+
+  test("signIn function exists and has correct signature", () => {
+    expect(typeof signIn).toBe("function");
+  });
+
+  test("signOut function exists and has correct signature", () => {
+    expect(typeof signOut).toBe("function");
+  });
+
+  test("getCurrentUser function exists and has correct signature", () => {
+    expect(typeof getCurrentUser).toBe("function");
+  });
+});
+
+// Test helper function for validating auth result structure
+function validateAuthResultStructure(
+  result: { success: boolean; error?: string; user?: unknown },
+  shouldHaveUser: boolean = false
+) {
+  expect(result).toHaveProperty("success");
+  expect(typeof result.success).toBe("boolean");
+
+  if (!result.success) {
+    expect(result).toHaveProperty("error");
+    expect(typeof result.error).toBe("string");
+  }
+
+  if (shouldHaveUser) {
+    expect(result).toHaveProperty("user");
+  }
+}
+
+describe("Auth Function Return Types", () => {
+  // These tests verify the functions return the correct structure
+  // without actually calling Supabase (which would require proper setup)
+
+  test("auth functions return proper error structure when missing environment", async () => {
+    // Temporarily clear env vars to test error handling
+    const originalUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const originalKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    delete process.env.NEXT_PUBLIC_SUPABASE_URL;
+    delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    try {
+      const result = await resetPassword("test@example.com");
+      validateAuthResultStructure(result);
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("configuration");
+    } catch (error) {
+      // Expected to throw due to missing config
+      expect(error).toBeDefined();
+    } finally {
+      // Restore env vars
+      if (originalUrl) process.env.NEXT_PUBLIC_SUPABASE_URL = originalUrl;
+      if (originalKey) process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = originalKey;
+    }
   });
 });

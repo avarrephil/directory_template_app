@@ -61,77 +61,83 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const handleSignUp = async (userData: SignUpData): Promise<AuthResult> => {
     const { signUp } = await import("@/lib/supabase-client");
     const result = await signUp(userData);
-    
+
     if (result.success && result.user) {
       setUser(result.user);
       setProfile(result.profile || null);
-      
+
       // Redirect based on role
-      if (result.profile?.role === 'admin') {
-        router.push('/upload');
+      if (result.profile?.role === "admin") {
+        router.push("/upload");
       } else {
-        router.push('/user-dashboard');
+        router.push("/user-dashboard");
       }
     }
-    
+
     return result;
   };
 
-  const handleSignIn = async (email: string, password: string): Promise<AuthResult> => {
+  const handleSignIn = async (
+    email: string,
+    password: string
+  ): Promise<AuthResult> => {
     const { signIn } = await import("@/lib/supabase-client");
     const result = await signIn(email, password);
-    
+
     if (result.success && result.user) {
       setUser(result.user);
       setProfile(result.profile || null);
-      
+
       // Redirect based on role
-      if (result.profile?.role === 'admin') {
-        router.push('/upload');
+      if (result.profile?.role === "admin") {
+        router.push("/upload");
       } else {
-        router.push('/user-dashboard');
+        router.push("/user-dashboard");
       }
     }
-    
+
     return result;
   };
 
-  const handleSignOut = async (): Promise<{ success: boolean; error?: string }> => {
+  const handleSignOut = async (): Promise<{
+    success: boolean;
+    error?: string;
+  }> => {
     const result = await supabaseSignOut();
-    
+
     if (result.success) {
       setUser(null);
       setProfile(null);
-      router.push('/login');
+      router.push("/login");
     }
-    
+
     return result;
   };
 
   useEffect(() => {
     const supabase = getSupabaseClient();
-    
+
     // Initial auth check
     refreshAuth();
-    
+
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          if (session?.user) {
-            const result = await getCurrentUser();
-            if (result.success) {
-              setUser(result.user || null);
-              setProfile(result.profile || null);
-            }
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
+        if (session?.user) {
+          const result = await getCurrentUser();
+          if (result.success) {
+            setUser(result.user || null);
+            setProfile(result.profile || null);
           }
-        } else if (event === 'SIGNED_OUT') {
-          setUser(null);
-          setProfile(null);
         }
-        setLoading(false);
+      } else if (event === "SIGNED_OUT") {
+        setUser(null);
+        setProfile(null);
       }
-    );
+      setLoading(false);
+    });
 
     return () => subscription.unsubscribe();
   }, []);
@@ -146,9 +152,5 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     refreshAuth,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

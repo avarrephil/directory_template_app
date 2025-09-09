@@ -25,19 +25,19 @@ export default function SignUpPage() {
     setError("");
 
     const result = await signUp(formData);
-    
+
     if (!result.success) {
       setError(result.error || "Sign up failed");
     }
-    
+
     setLoading(false);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
@@ -71,7 +71,10 @@ export default function SignUpPage() {
             )}
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Email Address
               </label>
               <div className="mt-1">
@@ -91,7 +94,10 @@ export default function SignUpPage() {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Password
               </label>
               <div className="mt-1">
@@ -112,7 +118,10 @@ export default function SignUpPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label htmlFor="first_name" className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="first_name"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   First Name
                 </label>
                 <div className="mt-1">
@@ -132,7 +141,10 @@ export default function SignUpPage() {
               </div>
 
               <div>
-                <label htmlFor="last_name" className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="last_name"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   Last Name
                 </label>
                 <div className="mt-1">
@@ -153,7 +165,10 @@ export default function SignUpPage() {
             </div>
 
             <div>
-              <label htmlFor="phone_number" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="phone_number"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Phone Number (Optional)
               </label>
               <div className="mt-1">
@@ -181,7 +196,10 @@ export default function SignUpPage() {
                 disabled={loading}
                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded disabled:opacity-50"
               />
-              <label htmlFor="owns_business" className="ml-2 block text-sm text-gray-900">
+              <label
+                htmlFor="owns_business"
+                className="ml-2 block text-sm text-gray-900"
+              >
                 I own a scratch & dent appliance business
               </label>
             </div>
@@ -199,8 +217,8 @@ export default function SignUpPage() {
             <div className="text-center">
               <p className="text-sm text-gray-600">
                 Already have an account?{" "}
-                <Link 
-                  href="/login" 
+                <Link
+                  href="/login"
                   className="font-medium text-blue-600 hover:text-blue-500"
                 >
                   Log in

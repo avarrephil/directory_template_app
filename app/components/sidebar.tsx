@@ -22,7 +22,8 @@ export default function Sidebar() {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   // Get navigation items based on user role
-  const navigation = profile?.role === 'admin' ? adminNavigation : userNavigation;
+  const navigation =
+    profile?.role === "admin" ? adminNavigation : userNavigation;
 
   const updatedNavigation = navigation.map((item) => ({
     ...item,
@@ -43,7 +44,7 @@ export default function Sidebar() {
               Business Directory
             </h1>
             <p className="text-sm text-gray-600 mt-1">
-              {profile?.role === 'admin' ? 'Admin Dashboard' : 'User Dashboard'}
+              {profile?.role === "admin" ? "Admin Dashboard" : "User Dashboard"}
             </p>
           </div>
           <nav className="flex-1 space-y-1 px-3">
@@ -61,7 +62,11 @@ export default function Sidebar() {
                 `}
               >
                 <span className="mr-3 text-lg">
-                  {item.name === "Upload" ? "📤" : item.name === "Home" ? "🏠" : "⚙️"}
+                  {item.name === "Upload"
+                    ? "📤"
+                    : item.name === "Home"
+                      ? "🏠"
+                      : "⚙️"}
                 </span>
                 {item.name}
               </Link>
@@ -73,17 +78,19 @@ export default function Sidebar() {
                 <p className="font-medium text-gray-900">
                   {profile.first_name} {profile.last_name}
                 </p>
-                <p className="text-xs text-gray-500 capitalize">{profile.role}</p>
+                <p className="text-xs text-gray-500 capitalize">
+                  {profile.role}
+                </p>
               </div>
             )}
-            
+
             <button
               onClick={() => setShowLogoutConfirm(true)}
               className="w-full text-left text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100 px-3 py-2 rounded-md transition-colors duration-200"
             >
               🚪 Logout
             </button>
-            
+
             <p className="text-xs text-gray-500">Version 1.0.0</p>
           </div>
         </div>
@@ -98,7 +105,8 @@ export default function Sidebar() {
                 Confirm Logout
               </h3>
               <p className="text-sm text-gray-500 mb-6">
-                Are you sure you want to log out? You&apos;ll need to sign in again to access your dashboard.
+                Are you sure you want to log out? You&apos;ll need to sign in
+                again to access your dashboard.
               </p>
               <div className="flex gap-4 justify-center">
                 <button

@@ -43,8 +43,8 @@ export default function UploadPage() {
             </h2>
             <p className="text-gray-600">
               Upload your business directory CSV files containing Google Maps
-              data. Files will be processed and cleaned with AI before being added
-              to your directory.
+              data. Files will be processed and cleaned with AI before being
+              added to your directory.
             </p>
           </div>
 
@@ -69,8 +69,8 @@ export default function UploadPage() {
               </h3>
               <div className="mt-2 text-sm text-blue-700">
                 <p>
-                  Uploaded files are securely stored and their metadata tracked in
-                  the database. The current implementation includes:
+                  Uploaded files are securely stored and their metadata tracked
+                  in the database. The current implementation includes:
                 </p>
                 <ul className="list-disc pl-5 mt-2 space-y-1">
                   <li>Secure file storage in cloud storage</li>
