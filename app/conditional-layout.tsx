@@ -5,12 +5,21 @@ import { useAuth } from "@/lib/auth-context";
 import Sidebar from "@/app/components/sidebar";
 import Topbar from "@/app/components/topbar";
 
-export default function ConditionalLayout({ children }: { children: React.ReactNode }) {
+export default function ConditionalLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const { user, loading } = useAuth();
   const pathname = usePathname();
 
   // Auth pages that should not show sidebar/topbar
-  const authPages = ['/login', '/signup', '/forgot-password'];
+  const authPages = [
+    "/login",
+    "/signup",
+    "/forgot-password",
+    "/reset-password",
+  ];
   const isAuthPage = authPages.includes(pathname);
 
   // Show loading state while checking authentication
@@ -34,9 +43,7 @@ export default function ConditionalLayout({ children }: { children: React.ReactN
       <Sidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Topbar />
-        <main className="flex-1 overflow-y-auto bg-gray-50">
-          {children}
-        </main>
+        <main className="flex-1 overflow-y-auto bg-gray-50">{children}</main>
       </div>
     </div>
   );

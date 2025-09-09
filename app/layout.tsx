@@ -30,9 +30,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50 text-gray-900`}
       >
         <AuthProvider>
-          <ConditionalLayout>
-            {children}
-          </ConditionalLayout>
+          <ConditionalLayout>{children}</ConditionalLayout>
         </AuthProvider>
       </body>
     </html>

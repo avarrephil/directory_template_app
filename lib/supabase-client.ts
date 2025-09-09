@@ -1,7 +1,7 @@
 import type { UploadedFile } from "@/app/types";
 import type { FileId } from "@/lib/types";
 import { brand } from "@/lib/types";
-import { createClient, type User } from '@supabase/supabase-js';
+import { createClient, type User } from "@supabase/supabase-js";
 
 // Phase 1: Internal Utilities
 type SupabaseConfig = {
@@ -439,7 +439,7 @@ export type UserProfile = {
   last_name: string;
   phone_number?: string;
   owns_business: boolean;
-  role: 'user' | 'admin';
+  role: "user" | "admin";
   created_at: string;
   updated_at: string;
 };
@@ -464,7 +464,7 @@ export type AuthResult = {
 export const signUp = async (userData: SignUpData): Promise<AuthResult> => {
   try {
     const supabase = getSupabaseClient();
-    
+
     const { data, error } = await supabase.auth.signUp({
       email: userData.email,
       password: userData.password,
@@ -472,10 +472,10 @@ export const signUp = async (userData: SignUpData): Promise<AuthResult> => {
         data: {
           first_name: userData.first_name,
           last_name: userData.last_name,
-          phone_number: userData.phone_number || '',
+          phone_number: userData.phone_number || "",
           owns_business: userData.owns_business,
-        }
-      }
+        },
+      },
     });
 
     if (error) {
@@ -486,7 +486,11 @@ export const signUp = async (userData: SignUpData): Promise<AuthResult> => {
       // Fetch the created profile
       const profileResult = await getUserProfile(data.user.id);
       if (profileResult.success) {
-        return { success: true, user: data.user, profile: profileResult.profile };
+        return {
+          success: true,
+          user: data.user,
+          profile: profileResult.profile,
+        };
       }
     }
 
@@ -499,10 +503,13 @@ export const signUp = async (userData: SignUpData): Promise<AuthResult> => {
   }
 };
 
-export const signIn = async (email: string, password: string): Promise<AuthResult> => {
+export const signIn = async (
+  email: string,
+  password: string
+): Promise<AuthResult> => {
   try {
     const supabase = getSupabaseClient();
-    
+
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -516,7 +523,11 @@ export const signIn = async (email: string, password: string): Promise<AuthResul
       // Fetch user profile
       const profileResult = await getUserProfile(data.user.id);
       if (profileResult.success) {
-        return { success: true, user: data.user, profile: profileResult.profile };
+        return {
+          success: true,
+          user: data.user,
+          profile: profileResult.profile,
+        };
       }
     }
 
@@ -529,11 +540,14 @@ export const signIn = async (email: string, password: string): Promise<AuthResul
   }
 };
 
-export const signOut = async (): Promise<{ success: boolean; error?: string }> => {
+export const signOut = async (): Promise<{
+  success: boolean;
+  error?: string;
+}> => {
   try {
     const supabase = getSupabaseClient();
     const { error } = await supabase.auth.signOut();
-    
+
     if (error) {
       return { success: false, error: error.message };
     }
@@ -550,7 +564,10 @@ export const signOut = async (): Promise<{ success: boolean; error?: string }> =
 export const getCurrentUser = async (): Promise<AuthResult> => {
   try {
     const supabase = getSupabaseClient();
-    const { data: { user }, error } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
 
     if (error) {
       return { success: false, error: error.message };
@@ -567,18 +584,21 @@ export const getCurrentUser = async (): Promise<AuthResult> => {
   } catch (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Failed to get current user",
+      error:
+        error instanceof Error ? error.message : "Failed to get current user",
     };
   }
 };
 
-export const getUserProfile = async (userId: string): Promise<{ success: boolean; profile?: UserProfile; error?: string }> => {
+export const getUserProfile = async (
+  userId: string
+): Promise<{ success: boolean; profile?: UserProfile; error?: string }> => {
   try {
     const supabase = getSupabaseClient();
     const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
+      .from("profiles")
+      .select("*")
+      .eq("id", userId)
       .single();
 
     if (error) {
@@ -589,12 +609,15 @@ export const getUserProfile = async (userId: string): Promise<{ success: boolean
   } catch (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Failed to fetch user profile",
+      error:
+        error instanceof Error ? error.message : "Failed to fetch user profile",
     };
   }
 };
 
-export const resetPassword = async (email: string): Promise<{ success: boolean; error?: string }> => {
+export const resetPassword = async (
+  email: string
+): Promise<{ success: boolean; error?: string }> => {
   try {
     const supabase = getSupabaseClient();
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -609,7 +632,31 @@ export const resetPassword = async (email: string): Promise<{ success: boolean; 
   } catch (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Failed to send reset email",
+      error:
+        error instanceof Error ? error.message : "Failed to send reset email",
+    };
+  }
+};
+
+export const updatePassword = async (
+  newPassword: string
+): Promise<{ success: boolean; error?: string }> => {
+  try {
+    const supabase = getSupabaseClient();
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "Failed to update password",
     };
   }
 };

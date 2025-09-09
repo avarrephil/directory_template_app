@@ -6,14 +6,14 @@ import { useAuth } from "@/lib/auth-context";
 
 type ProtectedRouteProps = {
   children: React.ReactNode;
-  requiredRole?: 'admin' | 'user';
+  requiredRole?: "admin" | "user";
   redirectTo?: string;
 };
 
-export default function ProtectedRoute({ 
-  children, 
+export default function ProtectedRoute({
+  children,
   requiredRole,
-  redirectTo
+  redirectTo,
 }: ProtectedRouteProps) {
   const { user, profile, loading } = useAuth();
   const router = useRouter();
@@ -23,19 +23,19 @@ export default function ProtectedRoute({
 
     // Redirect to login if not authenticated
     if (!user) {
-      router.push('/login');
+      router.push("/login");
       return;
     }
 
     // Check role-based access
     if (requiredRole && profile?.role !== requiredRole) {
       // Redirect based on user's actual role
-      if (profile?.role === 'admin') {
-        router.push('/upload');
-      } else if (profile?.role === 'user') {
-        router.push('/user-dashboard');
+      if (profile?.role === "admin") {
+        router.push("/upload");
+      } else if (profile?.role === "user") {
+        router.push("/user-dashboard");
       } else {
-        router.push('/login');
+        router.push("/login");
       }
       return;
     }

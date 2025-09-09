@@ -14,11 +14,11 @@ export default function UserDashboardPage() {
             <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-6">
               <span className="text-2xl">👋</span>
             </div>
-            
+
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
               Welcome back {profile?.first_name}!
             </h1>
-            
+
             <p className="text-gray-600 mb-8">
               Your user dashboard is ready. More features coming soon!
             </p>
@@ -33,13 +33,22 @@ export default function UserDashboardPage() {
                     Account Information
                   </h3>
                   <div className="mt-2 text-sm text-blue-700">
-                    <p><strong>Name:</strong> {profile?.first_name} {profile?.last_name}</p>
-                    <p><strong>Role:</strong> {profile?.role}</p>
+                    <p>
+                      <strong>Name:</strong> {profile?.first_name}{" "}
+                      {profile?.last_name}
+                    </p>
+                    <p>
+                      <strong>Role:</strong> {profile?.role}
+                    </p>
                     {profile?.phone_number && (
-                      <p><strong>Phone:</strong> {profile.phone_number}</p>
+                      <p>
+                        <strong>Phone:</strong> {profile.phone_number}
+                      </p>
                     )}
                     {profile?.owns_business && (
-                      <p><strong>Business Owner:</strong> Yes</p>
+                      <p>
+                        <strong>Business Owner:</strong> Yes
+                      </p>
                     )}
                   </div>
                 </div>
@@ -57,12 +66,14 @@ export default function UserDashboardPage() {
               <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
                 <span className="text-xl">🔍</span>
               </div>
-              <h3 className="font-medium text-gray-900 mb-2">Search Directory</h3>
+              <h3 className="font-medium text-gray-900 mb-2">
+                Search Directory
+              </h3>
               <p className="text-sm text-gray-500">
                 Browse and search through business listings
               </p>
             </div>
-            
+
             <div className="border border-gray-200 rounded-lg p-4 text-center">
               <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
                 <span className="text-xl">⭐</span>
@@ -72,7 +83,7 @@ export default function UserDashboardPage() {
                 Save and manage your favorite businesses
               </p>
             </div>
-            
+
             <div className="border border-gray-200 rounded-lg p-4 text-center">
               <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
                 <span className="text-xl">📊</span>

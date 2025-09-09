@@ -20,18 +20,18 @@ export default function LoginPage() {
     setError("");
 
     const result = await signIn(formData.email, formData.password);
-    
+
     if (!result.success) {
       setError(result.error || "Login failed");
     }
-    
+
     setLoading(false);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     }));
   };
 
@@ -68,7 +68,10 @@ export default function LoginPage() {
             )}
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Email Address
               </label>
               <div className="mt-1">
@@ -88,7 +91,10 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Password
               </label>
               <div className="mt-1">
@@ -109,8 +115,8 @@ export default function LoginPage() {
 
             <div className="flex items-center justify-between">
               <div className="text-sm">
-                <Link 
-                  href="/forgot-password" 
+                <Link
+                  href="/forgot-password"
                   className="font-medium text-blue-600 hover:text-blue-500"
                 >
                   Forgot your password?
@@ -131,8 +137,8 @@ export default function LoginPage() {
             <div className="text-center">
               <p className="text-sm text-gray-600">
                 Don&apos;t have an account?{" "}
-                <Link 
-                  href="/signup" 
+                <Link
+                  href="/signup"
                   className="font-medium text-blue-600 hover:text-blue-500"
                 >
                   Sign up
