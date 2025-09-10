@@ -39,9 +39,15 @@ describe("validateCsvFile", () => {
   });
 
   test("rejects file exceeding size limit", () => {
-    const largeContent = "x".repeat(51 * 1024 * 1024); // 51MB
-    const largeFile = new File([largeContent], "large.csv", {
+    // Create a mock file with large size but without allocating actual memory
+    const largeFile = new File(["small content"], "large.csv", {
       type: "text/csv",
+    });
+
+    // Mock the size property to simulate a large file
+    Object.defineProperty(largeFile, "size", {
+      value: 51 * 1024 * 1024, // 51MB
+      writable: false,
     });
 
     const result = validateCsvFile(largeFile);

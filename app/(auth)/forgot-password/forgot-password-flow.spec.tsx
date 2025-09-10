@@ -87,18 +87,16 @@ describe("Forgot Password Flow End-to-End", () => {
     await user.click(screen.getByRole("button", { name: "Send Reset Link" }));
 
     // Verify resetPassword was called with correct email
-    await waitFor(() => {
-      expect(mockResetPassword).toHaveBeenCalledWith(testEmail);
-    });
+    expect(mockResetPassword).toHaveBeenCalledWith(testEmail);
   });
 
   test("shows loading state during password reset request", async () => {
-    mockResetPassword.mockImplementation(
-      () =>
-        new Promise((resolve) =>
-          setTimeout(() => resolve({ success: true }), 100)
-        )
-    );
+    let resolvePromise: (value: { success: boolean }) => void;
+    const mockPromise = new Promise<{ success: boolean }>((resolve) => {
+      resolvePromise = resolve;
+    });
+
+    mockResetPassword.mockReturnValue(mockPromise);
 
     render(<ForgotPasswordPage />);
 
@@ -116,9 +114,9 @@ describe("Forgot Password Flow End-to-End", () => {
     expect(screen.getByRole("button")).toBeDisabled();
     expect(screen.getByLabelText("Email Address")).toBeDisabled();
 
-    // Wait for loading to complete
+    // Resolve the promise
     await act(async () => {
-      vi.advanceTimersByTime(100);
+      resolvePromise({ success: true });
     });
   });
 

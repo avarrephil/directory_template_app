@@ -66,14 +66,28 @@ describe("File Upload Functionality for Admin Users", () => {
 
   test("handles successful file upload", async () => {
     mockUploadFile.mockImplementation((file, options) => {
-      // Simulate progress callbacks
-      setTimeout(() => options.onProgress({ percentage: 50 }), 10);
-      setTimeout(() => options.onProgress({ percentage: 100 }), 20);
+      // Simulate progress callbacks with complete FileUploadProgress objects
+      if (options?.onProgress) {
+        setTimeout(
+          () => options.onProgress!({ loaded: 50, total: 100, percentage: 50 }),
+          10
+        );
+        setTimeout(
+          () =>
+            options.onProgress!({ loaded: 100, total: 100, percentage: 100 }),
+          20
+        );
+      }
 
       return Promise.resolve({
         success: true,
-        fileName: file.name,
-        fileId: "test-file-id",
+        file: {
+          id: "test-file-id" as any,
+          name: file.name,
+          size: file.size,
+          uploadedAt: new Date(),
+          status: "uploaded",
+        },
       });
     });
 
@@ -105,26 +119,47 @@ describe("File Upload Functionality for Admin Users", () => {
       expect(mockOnFilesUploaded).toHaveBeenCalledWith([
         {
           success: true,
-          fileName: "test.csv",
-          fileId: "test-file-id",
+          file: {
+            id: "test-file-id",
+            name: "test.csv",
+            size: expect.any(Number),
+            uploadedAt: expect.any(Date),
+            status: "uploaded",
+          },
         },
       ]);
     });
   });
 
   test("displays upload progress for files", async () => {
-    let progressCallback: (progress: { percentage: number }) => void;
-
     mockUploadFile.mockImplementation((file, options) => {
-      progressCallback = options.onProgress;
       return new Promise((resolve) => {
         setTimeout(() => {
-          progressCallback({ percentage: 25 });
+          if (options?.onProgress) {
+            options.onProgress({ loaded: 25, total: 100, percentage: 25 });
+          }
           setTimeout(() => {
-            progressCallback({ percentage: 75 });
+            if (options?.onProgress) {
+              options.onProgress({ loaded: 75, total: 100, percentage: 75 });
+            }
             setTimeout(() => {
-              progressCallback({ percentage: 100 });
-              resolve({ success: true, fileName: file.name });
+              if (options?.onProgress) {
+                options.onProgress({
+                  loaded: 100,
+                  total: 100,
+                  percentage: 100,
+                });
+              }
+              resolve({
+                success: true,
+                file: {
+                  id: "test-file-id" as any,
+                  name: file.name,
+                  size: file.size,
+                  uploadedAt: new Date(),
+                  status: "uploaded",
+                },
+              });
             }, 50);
           }, 50);
         }, 50);
@@ -222,7 +257,13 @@ describe("File Upload Functionality for Admin Users", () => {
   test("drag and drop functionality works", async () => {
     mockUploadFile.mockResolvedValue({
       success: true,
-      fileName: "dropped.csv",
+      file: {
+        id: "test-file-id" as any,
+        name: "dropped.csv",
+        size: 1000,
+        uploadedAt: new Date(),
+        status: "uploaded",
+      },
     });
 
     render(<FileUpload onFilesUploaded={mockOnFilesUploaded} />);
@@ -312,7 +353,16 @@ describe("File Upload Functionality for Admin Users", () => {
   });
 
   test("resets file input after selection", async () => {
-    mockUploadFile.mockResolvedValue({ success: true, fileName: "test.csv" });
+    mockUploadFile.mockResolvedValue({
+      success: true,
+      file: {
+        id: "test-file-id" as any,
+        name: "test.csv",
+        size: 1000,
+        uploadedAt: new Date(),
+        status: "uploaded",
+      },
+    });
 
     render(<FileUpload onFilesUploaded={mockOnFilesUploaded} />);
 
@@ -343,7 +393,16 @@ describe("File Upload Functionality for Admin Users", () => {
     ];
 
     mockUploadFile.mockImplementation((file) =>
-      Promise.resolve({ success: true, fileName: file.name })
+      Promise.resolve({
+        success: true,
+        file: {
+          id: `test-file-id-${file.name}` as any,
+          name: file.name,
+          size: file.size,
+          uploadedAt: new Date(),
+          status: "uploaded",
+        },
+      })
     );
 
     render(<FileUpload onFilesUploaded={mockOnFilesUploaded} />);

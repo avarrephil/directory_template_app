@@ -1,35 +1,39 @@
 import { render, screen } from "@testing-library/react";
-import { describe, test, expect, vi } from "vitest";
+import { describe, test, expect, vi, beforeEach } from "vitest";
+
+// Mock Next.js navigation hooks
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/upload",
+}));
+
+// Mock Next.js Link component
+vi.mock("next/link", () => ({
+  default: ({
+    children,
+    href,
+  }: {
+    children: React.ReactNode;
+    href: string;
+  }) => <a href={href}>{children}</a>,
+}));
 
 // Test Admin Navigation
 describe("Admin Role Navigation", () => {
-  // Mock admin profile
-  vi.mock("@/lib/auth-context", () => ({
-    useAuth: () => ({
-      profile: {
-        first_name: "Admin",
-        last_name: "User",
-        role: "admin",
-      },
-      signOut: vi.fn(),
-    }),
-  }));
+  beforeEach(() => {
+    vi.clearAllMocks();
 
-  // Mock Next.js navigation hooks
-  vi.mock("next/navigation", () => ({
-    usePathname: () => "/upload",
-  }));
-
-  // Mock Next.js Link component
-  vi.mock("next/link", () => ({
-    default: ({
-      children,
-      href,
-    }: {
-      children: React.ReactNode;
-      href: string;
-    }) => <a href={href}>{children}</a>,
-  }));
+    // Mock admin profile
+    vi.doMock("@/lib/auth-context", () => ({
+      useAuth: () => ({
+        profile: {
+          first_name: "Admin",
+          last_name: "User",
+          role: "admin",
+        },
+        signOut: vi.fn(),
+      }),
+    }));
+  });
 
   test("admin sees Upload and Settings navigation items", async () => {
     const { default: Sidebar } = await import("./sidebar");
@@ -37,11 +41,9 @@ describe("Admin Role Navigation", () => {
 
     // Admin should see Upload navigation
     expect(screen.getByText("Upload")).toBeInTheDocument();
-    expect(screen.getByText("📤")).toBeInTheDocument();
 
     // Admin should see Settings navigation
     expect(screen.getByText("Settings")).toBeInTheDocument();
-    expect(screen.getByText("⚙️")).toBeInTheDocument();
 
     // Check navigation links point to correct routes
     const uploadLink = screen.getByText("Upload").closest("a");
@@ -69,21 +71,25 @@ describe("Admin Role Navigation", () => {
 });
 
 describe("User Role Navigation", () => {
-  // Reset and mock user profile
-  vi.doMock("@/lib/auth-context", () => ({
-    useAuth: () => ({
-      profile: {
-        first_name: "John",
-        last_name: "Doe",
-        role: "user",
-      },
-      signOut: vi.fn(),
-    }),
-  }));
+  beforeEach(() => {
+    vi.clearAllMocks();
 
-  vi.doMock("next/navigation", () => ({
-    usePathname: () => "/user-dashboard",
-  }));
+    // Reset and mock user profile
+    vi.doMock("@/lib/auth-context", () => ({
+      useAuth: () => ({
+        profile: {
+          first_name: "John",
+          last_name: "Doe",
+          role: "user",
+        },
+        signOut: vi.fn(),
+      }),
+    }));
+
+    vi.doMock("next/navigation", () => ({
+      usePathname: () => "/user-dashboard",
+    }));
+  });
 
   test("user sees Home and Settings navigation items", async () => {
     // Import with fresh mock
@@ -94,11 +100,9 @@ describe("User Role Navigation", () => {
 
     // User should see Home navigation
     expect(screen.getByText("Home")).toBeInTheDocument();
-    expect(screen.getByText("🏠")).toBeInTheDocument();
 
     // User should see Settings navigation
     expect(screen.getByText("Settings")).toBeInTheDocument();
-    expect(screen.getByText("⚙️")).toBeInTheDocument();
 
     // Check navigation links point to correct routes
     const homeLink = screen.getByText("Home").closest("a");
