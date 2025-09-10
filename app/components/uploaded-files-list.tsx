@@ -5,6 +5,7 @@ import { UploadedFile } from "@/app/types";
 import type { FileId } from "@/lib/types";
 import { fetchUploadedFiles, deleteFileRecord } from "@/lib/supabase-client";
 import CSVViewerModal from "./csv-viewer-modal";
+import AddDataModal from "./add-data-modal";
 
 interface UploadedFilesListProps {
   refreshTrigger?: number;
@@ -38,6 +39,8 @@ const getStatusColor = (status: UploadedFile["status"]): string => {
       return "bg-yellow-100 text-yellow-800";
     case "failed":
       return "bg-red-100 text-red-800";
+    case "added":
+      return "bg-blue-100 text-blue-800";
     default:
       return "bg-gray-100 text-gray-800";
   }
@@ -52,6 +55,10 @@ export default function UploadedFilesList({
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<Record<string, boolean>>({});
   const [viewingFile, setViewingFile] = useState<{
+    id: FileId;
+    name: string;
+  } | null>(null);
+  const [addingDataFile, setAddingDataFile] = useState<{
     id: FileId;
     name: string;
   } | null>(null);
@@ -206,6 +213,16 @@ export default function UploadedFilesList({
                   </button>
                   <button
                     type="button"
+                    onClick={() => {
+                      setAddingDataFile({ id: file.id, name: file.name });
+                    }}
+                    disabled={file.status !== "uploaded"}
+                    className="inline-flex items-center px-3 py-1.5 border border-green-300 shadow-sm text-xs font-medium rounded text-green-700 bg-green-50 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {file.status === "added" ? "✅ Added" : "📥 Add Data"}
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => handleDeleteFile(file.id)}
                     disabled={deleting[file.id]}
                     className="inline-flex items-center px-3 py-1.5 border border-red-300 shadow-sm text-xs font-medium rounded text-red-700 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -232,6 +249,19 @@ export default function UploadedFilesList({
           fileId={viewingFile.id}
           fileName={viewingFile.name}
           onClose={() => setViewingFile(null)}
+        />
+      )}
+
+      {/* Add Data Modal */}
+      {addingDataFile && (
+        <AddDataModal
+          fileId={addingDataFile.id}
+          fileName={addingDataFile.name}
+          onClose={() => setAddingDataFile(null)}
+          onSuccess={() => {
+            setAddingDataFile(null);
+            loadFiles(); // Refresh files list to show updated status
+          }}
         />
       )}
     </div>

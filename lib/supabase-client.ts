@@ -766,3 +766,98 @@ export const updatePassword = async (
     };
   }
 };
+
+// Pre-release data processing
+export type ProcessResult = {
+  success: boolean;
+  processed?: number;
+  error?: string;
+};
+
+export type ProcessProgress = {
+  loaded: number;
+  total: number;
+  percentage: number;
+};
+
+export type ProcessOptions = {
+  onProgress?: (progress: ProcessProgress) => void;
+};
+
+export const processFileToPreRelease = async (
+  fileId: FileId,
+  options?: ProcessOptions
+): Promise<ProcessResult> => {
+  try {
+    const supabase = getSupabaseClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.access_token) {
+      return {
+        success: false,
+        error: "Authentication required",
+      };
+    }
+
+    // Start processing and simulate progress
+    const startTime = Date.now();
+    const estimatedDuration = 30000; // Estimate 30 seconds for processing
+    
+    // Start progress simulation
+    const progressInterval = setInterval(() => {
+      if (options?.onProgress) {
+        const elapsed = Date.now() - startTime;
+        const percentage = Math.min(95, Math.round((elapsed / estimatedDuration) * 100));
+        
+        options.onProgress({
+          loaded: percentage,
+          total: 100,
+          percentage: percentage,
+        });
+      }
+    }, 500); // Update every 500ms
+
+    try {
+      const response = await fetch(`/api/files/${fileId}/add-to-prerelease`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+      });
+
+      clearInterval(progressInterval);
+
+      // Set to 100% when complete
+      if (options?.onProgress) {
+        options.onProgress({
+          loaded: 100,
+          total: 100,
+          percentage: 100,
+        });
+      }
+
+      if (response.ok) {
+        const result = await response.json();
+        return result;
+      } else {
+        const errorText = await response.text();
+        return {
+          success: false,
+          error: `Processing failed: ${response.status} - ${errorText}`,
+        };
+      }
+    } catch (error) {
+      clearInterval(progressInterval);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Network error during processing",
+      };
+    }
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+};
