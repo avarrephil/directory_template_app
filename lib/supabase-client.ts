@@ -2,6 +2,62 @@ import type { UploadedFile } from "@/app/types";
 import type { FileId } from "@/lib/types";
 import { brand } from "@/lib/types";
 import { createClient, type User } from "@supabase/supabase-js";
+import { AUTH_CONFIG, type AuthTimeoutResponse } from "./auth-config";
+import { authLog } from "./auth-logger";
+
+// Session timeout tracking
+type SessionTimeouts = {
+  idleTimeout: NodeJS.Timeout | null;
+  absoluteTimeout: NodeJS.Timeout | null;
+  lastActivity: number;
+};
+
+let sessionTimeouts: SessionTimeouts = {
+  idleTimeout: null,
+  absoluteTimeout: null,
+  lastActivity: Date.now(),
+};
+
+// Session timeout management
+export const clearSessionTimeouts = (): void => {
+  if (sessionTimeouts.idleTimeout) {
+    clearTimeout(sessionTimeouts.idleTimeout);
+    sessionTimeouts.idleTimeout = null;
+  }
+  if (sessionTimeouts.absoluteTimeout) {
+    clearTimeout(sessionTimeouts.absoluteTimeout);
+    sessionTimeouts.absoluteTimeout = null;
+  }
+};
+
+export const updateActivityTimestamp = (): void => {
+  sessionTimeouts.lastActivity = Date.now();
+
+  // Reset idle timeout
+  if (sessionTimeouts.idleTimeout) {
+    clearTimeout(sessionTimeouts.idleTimeout);
+  }
+
+  sessionTimeouts.idleTimeout = setTimeout(() => {
+    authLog.warn("Session idle timeout reached, signing out");
+    signOut();
+  }, AUTH_CONFIG.IDLE_SESSION_TIMEOUT_MS);
+};
+
+export const startSessionTimeouts = (): void => {
+  clearSessionTimeouts();
+
+  // Start idle timeout
+  updateActivityTimestamp();
+
+  // Start absolute timeout
+  sessionTimeouts.absoluteTimeout = setTimeout(() => {
+    authLog.warn("Absolute session timeout reached, signing out");
+    signOut();
+  }, AUTH_CONFIG.ABSOLUTE_SESSION_TIMEOUT_MS);
+
+  authLog.debug("Session timeouts started");
+};
 
 // Phase 1: Internal Utilities
 type SupabaseConfig = {
@@ -24,7 +80,19 @@ let supabaseInstance: ReturnType<typeof createClient> | null = null;
 export const getSupabaseClient = () => {
   if (!supabaseInstance) {
     const config = getSupabaseConfig();
-    supabaseInstance = createClient(config.url, config.key);
+    supabaseInstance = createClient(config.url, config.key, {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true,
+        flowType: "pkce",
+      },
+      global: {
+        headers: {
+          "X-Client-Info": "directory-template-app",
+        },
+      },
+    });
   }
   return supabaseInstance;
 };
@@ -516,10 +584,14 @@ export const signIn = async (
     });
 
     if (error) {
+      authLog.error("Sign in failed", error.message);
       return { success: false, error: error.message };
     }
 
     if (data.user) {
+      authLog.debug("User signed in successfully");
+      startSessionTimeouts();
+
       // Fetch user profile
       const profileResult = await getUserProfile(data.user.id);
       if (profileResult.success) {
@@ -533,6 +605,7 @@ export const signIn = async (
 
     return { success: true, user: data.user };
   } catch (error) {
+    authLog.error("Sign in exception", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Login failed",
@@ -545,15 +618,21 @@ export const signOut = async (): Promise<{
   error?: string;
 }> => {
   try {
+    authLog.debug("Signing out user");
+    clearSessionTimeouts();
+
     const supabase = getSupabaseClient();
     const { error } = await supabase.auth.signOut();
 
     if (error) {
+      authLog.error("Sign out failed", error.message);
       return { success: false, error: error.message };
     }
 
+    authLog.debug("User signed out successfully");
     return { success: true };
   } catch (error) {
+    authLog.error("Sign out exception", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Logout failed",
@@ -561,47 +640,54 @@ export const signOut = async (): Promise<{
   }
 };
 
+const createAuthTimeout = (): Promise<AuthTimeoutResponse> => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      authLog.timeout("Auth request timed out, returning no user");
+      resolve({ data: { user: null }, error: null });
+    }, AUTH_CONFIG.TIMEOUT_MS);
+  });
+};
+
+const authenticateUser = async (): Promise<{
+  data: { user: any };
+  error: any;
+}> => {
+  const supabase = getSupabaseClient();
+  const authPromise = supabase.auth.getUser();
+  const timeoutPromise = createAuthTimeout();
+
+  return await Promise.race([authPromise, timeoutPromise]);
+};
+
 export const getCurrentUser = async (): Promise<AuthResult> => {
   try {
-    console.log("🔍 getCurrentUser: Starting...");
-    const supabase = getSupabaseClient();
-    console.log("🔍 getCurrentUser: Got Supabase client");
-    
-    // Add timeout to prevent hanging (increased to 15 seconds for better UX)
-    const timeoutPromise = new Promise<{data: {user: null}, error: null}>((resolve) => {
-      setTimeout(() => {
-        console.log("⏰ getCurrentUser: Auth timed out, returning no user");
-        resolve({data: {user: null}, error: null});
-      }, 15000);
-    });
+    authLog.debug("Starting getCurrentUser");
 
-    const authPromise = supabase.auth.getUser();
-    
     const {
       data: { user },
       error,
-    } = await Promise.race([authPromise, timeoutPromise]);
-    
-    console.log("🔍 getCurrentUser: Got user from Supabase", { user: !!user, error });
+    } = await authenticateUser();
+    authLog.debug("Got user from Supabase", { user: !!user, error: !!error });
 
     if (error) {
-      console.log("❌ getCurrentUser: Supabase auth error:", error.message);
+      authLog.error("Supabase auth error", error.message);
       return { success: false, error: error.message };
     }
 
     if (user) {
-      console.log("🔍 getCurrentUser: User found, getting profile...");
+      authLog.debug("User found, getting profile");
       const profileResult = await getUserProfile(user.id);
-      console.log("🔍 getCurrentUser: Profile result:", profileResult);
+      authLog.debug("Profile result", { success: profileResult.success });
       if (profileResult.success) {
         return { success: true, user, profile: profileResult.profile };
       }
     }
 
-    console.log("🔍 getCurrentUser: No user found, returning success with null user");
+    authLog.debug("No user found, returning success with null user");
     return { success: true, user };
   } catch (error) {
-    console.error("❌ getCurrentUser: Exception:", error);
+    authLog.error("getCurrentUser exception", error);
     return {
       success: false,
       error:
@@ -677,6 +763,101 @@ export const updatePassword = async (
       success: false,
       error:
         error instanceof Error ? error.message : "Failed to update password",
+    };
+  }
+};
+
+// Pre-release data processing
+export type ProcessResult = {
+  success: boolean;
+  processed?: number;
+  error?: string;
+};
+
+export type ProcessProgress = {
+  loaded: number;
+  total: number;
+  percentage: number;
+};
+
+export type ProcessOptions = {
+  onProgress?: (progress: ProcessProgress) => void;
+};
+
+export const processFileToPreRelease = async (
+  fileId: FileId,
+  options?: ProcessOptions
+): Promise<ProcessResult> => {
+  try {
+    const supabase = getSupabaseClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.access_token) {
+      return {
+        success: false,
+        error: "Authentication required",
+      };
+    }
+
+    // Start processing and simulate progress
+    const startTime = Date.now();
+    const estimatedDuration = 30000; // Estimate 30 seconds for processing
+    
+    // Start progress simulation
+    const progressInterval = setInterval(() => {
+      if (options?.onProgress) {
+        const elapsed = Date.now() - startTime;
+        const percentage = Math.min(95, Math.round((elapsed / estimatedDuration) * 100));
+        
+        options.onProgress({
+          loaded: percentage,
+          total: 100,
+          percentage: percentage,
+        });
+      }
+    }, 500); // Update every 500ms
+
+    try {
+      const response = await fetch(`/api/files/${fileId}/add-to-prerelease`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+      });
+
+      clearInterval(progressInterval);
+
+      // Set to 100% when complete
+      if (options?.onProgress) {
+        options.onProgress({
+          loaded: 100,
+          total: 100,
+          percentage: 100,
+        });
+      }
+
+      if (response.ok) {
+        const result = await response.json();
+        return result;
+      } else {
+        const errorText = await response.text();
+        return {
+          success: false,
+          error: `Processing failed: ${response.status} - ${errorText}`,
+        };
+      }
+    } catch (error) {
+      clearInterval(progressInterval);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Network error during processing",
+      };
+    }
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
     };
   }
 };

@@ -7,10 +7,15 @@ import {
   getSupabaseClient,
   getCurrentUser,
   signOut as supabaseSignOut,
+  updateActivityTimestamp,
+  startSessionTimeouts,
+  clearSessionTimeouts,
   type UserProfile,
   type AuthResult,
   type SignUpData,
 } from "@/lib/supabase-client";
+import { shouldSkipAuthRefresh } from "@/lib/auth-utils";
+import { authLog } from "@/lib/auth-logger";
 
 type AuthContextType = {
   user: User | null;
@@ -39,36 +44,40 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [lastAuthCheck, setLastAuthCheck] = useState<number>(0);
   const router = useRouter();
 
+  // Track user activity for session management
+  const trackActivity = () => {
+    if (user) {
+      updateActivityTimestamp();
+    }
+  };
+
   const refreshAuth = async (force: boolean = false) => {
-    // Don't refresh if we just checked recently (unless forced)
-    const now = Date.now();
-    if (!force && lastAuthCheck > 0 && now - lastAuthCheck < 30000) { // 30 seconds
-      console.log("⏭️ AuthProvider: Skipping auth refresh (recent check)");
+    if (shouldSkipAuthRefresh(lastAuthCheck, force)) {
+      authLog.info("Skipping auth refresh (recent check)");
       setLoading(false);
       return;
     }
 
     try {
-      console.log("🔄 AuthProvider: Starting refreshAuth...");
+      authLog.debug("Starting refreshAuth");
       setLoading(true);
-      console.log("📡 AuthProvider: Calling getCurrentUser...");
+
       const result = await getCurrentUser();
-      console.log("📡 AuthProvider: getCurrentUser result:", result);
+
       if (result.success) {
         setUser(result.user || null);
         setProfile(result.profile || null);
-        setLastAuthCheck(now);
+        setLastAuthCheck(Date.now());
       } else {
-        console.log("❌ AuthProvider: getCurrentUser failed:", result.error);
+        authLog.error("getCurrentUser failed", result.error);
         setUser(null);
         setProfile(null);
       }
     } catch (error) {
-      console.error("❌ AuthProvider: Auth refresh error:", error);
+      authLog.error("Auth refresh error", error);
       setUser(null);
       setProfile(null);
     } finally {
-      console.log("✅ AuthProvider: Setting loading to false");
       setLoading(false);
     }
   };
@@ -80,6 +89,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (result.success && result.user) {
       setUser(result.user);
       setProfile(result.profile || null);
+      startSessionTimeouts();
 
       // Redirect based on role
       if (result.profile?.role === "admin") {
@@ -102,6 +112,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (result.success && result.user) {
       setUser(result.user);
       setProfile(result.profile || null);
+      startSessionTimeouts();
 
       // Redirect based on role
       if (result.profile?.role === "admin") {
@@ -118,6 +129,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     success: boolean;
     error?: string;
   }> => {
+    clearSessionTimeouts();
     const result = await supabaseSignOut();
 
     if (result.success) {
@@ -139,24 +151,47 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("🔄 Auth state change:", event);
+      authLog.debug("Auth state change", event);
       if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
         if (session?.user) {
           const result = await getCurrentUser();
           if (result.success) {
             setUser(result.user || null);
             setProfile(result.profile || null);
+            if (event === "SIGNED_IN") {
+              startSessionTimeouts();
+            }
           }
         }
       } else if (event === "SIGNED_OUT") {
-        console.log("👋 User signed out");
+        authLog.info("User signed out");
+        clearSessionTimeouts();
         setUser(null);
         setProfile(null);
       }
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    // Add global activity listeners for session management
+    const activityEvents = [
+      "click",
+      "keypress",
+      "scroll",
+      "mousemove",
+      "touchstart",
+    ];
+
+    activityEvents.forEach((event) => {
+      document.addEventListener(event, trackActivity, { passive: true });
+    });
+
+    return () => {
+      subscription.unsubscribe();
+      activityEvents.forEach((event) => {
+        document.removeEventListener(event, trackActivity);
+      });
+      clearSessionTimeouts();
+    };
   }, []);
 
   const value: AuthContextType = {

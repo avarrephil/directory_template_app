@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { describe, test, expect, vi } from "vitest";
+import { describe, test, expect, vi, beforeEach } from "vitest";
 import SettingsPage from "./page";
 
 // Mock the ProtectedRoute component

@@ -5,7 +5,7 @@ export interface UploadedFile {
   name: string;
   size: number;
   uploadedAt: Date;
-  status: "uploading" | "uploaded" | "failed";
+  status: "uploading" | "uploaded" | "failed" | "added";
   storage_path?: string;
 }
 
