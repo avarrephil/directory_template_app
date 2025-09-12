@@ -1,0 +1,295 @@
+# HomePage Initial Prompt
+
+I need you to build a customizable local business directory homepage that integrates with my existing MVP upload system. This will be the public-facing homepage with full admin customization capabilities.
+
+## Tech Stack & Integration
+- Next.js 14+ with App Router and TypeScript
+- Tailwind CSS for styling
+- Supabase database (existing connection via lib/supabase.ts)
+- Integration with existing MVP admin system
+- SEO optimized with schema markup
+- No src directory - use root-level structure
+
+## Database Schema Integration
+Use existing `production_businesses` table to extract data. Also create these new tables for admin customization:
+
+```sql
+CREATE TABLE site_settings (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  directory_name TEXT DEFAULT 'Local Business Directory',
+  logo_url TEXT,
+  primary_color TEXT DEFAULT '#2563eb',
+  secondary_color TEXT DEFAULT '#1e40af',
+  hero_title TEXT DEFAULT 'Find Local Businesses',
+  hero_subtitle TEXT DEFAULT 'Discover Quality Services',
+  hero_description TEXT DEFAULT 'Find local businesses across America...',
+  browse_all_cta TEXT DEFAULT 'Browse All States',
+  view_top_cta TEXT DEFAULT 'View Top States',
+  bystate_title TEXT DEFAULT 'Local Businesses by State',
+  bystate_description TEXT DEFAULT 'Find businesses in your state...',
+  show_bystate_section BOOLEAN DEFAULT true,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Insert default settings
+INSERT INTO site_settings (id) VALUES ('00000000-0000-0000-0000-000000000001');
+```
+
+## Homepage Components Required
+
+### 1. Navigation Bar
+- Logo (from site_settings.logo_url or default)
+- Menu items: Home, Browse States, About Us, Contact
+- "Browse Directory" button (styled prominently)
+- Responsive mobile menu
+- Same styling as the reference image
+
+### 2. Hero Section
+- Dynamic background gradient (blue like reference)
+- Customizable title (site_settings.hero_title)
+- Customizable subtitle with highlight color (site_settings.hero_subtitle)
+- Description text (site_settings.hero_description)
+- 3 Statistics cards with real-time data from database:
+  - Total Store Listings (count from production_businesses)
+  - States Covered (distinct states from production_businesses)
+  - Cities Covered (distinct cities from production_businesses)
+- Two CTA buttons (customizable text from site_settings)
+
+### 3. By State Section (Conditional Display)
+- Show/hide based on site_settings.show_bystate_section
+- Customizable title and description
+- Display top 8 states by business count
+- State cards with emoji icons:
+  - Florida 🌴, Texas ⭐, California 🌴, Pennsylvania 📍
+  - Georgia 🍑, Illinois 🏢, Ohio 📍, Missouri 📍
+- Each card shows: state name, business count, cities count, "View Directory" link
+- Responsive grid layout (2x4 on desktop, 1 column on mobile)
+
+## File Structure to Create/Modify
+
+```
+├── app/
+│   ├── page.tsx (NEW - Homepage)
+│   ├── browse-states/
+│   │   └── page.tsx (NEW - Browse States page)
+│   ├── about/
+│   │   └── page.tsx (NEW - About page)
+│   ├── contact/
+│   │   └── page.tsx (NEW - Contact page)
+│   ├── admin/
+│   │   └── settings/
+│   │       └── page.tsx (MODIFY - Add homepage settings)
+│   └── globals.css (MODIFY - Add custom CSS variables)
+├── components/
+│   ├── public/
+│   │   ├── Navbar.tsx (NEW)
+│   │   ├── HeroSection.tsx (NEW)
+│   │   ├── StatCard.tsx (NEW)
+│   │   ├── ByStateSection.tsx (NEW)
+│   │   ├── StateCard.tsx (NEW)
+│   │   └── Footer.tsx (NEW)
+│   └── admin/
+│       └── HomepageSettings.tsx (NEW - Admin customization)
+├── hooks/
+│   ├── useHomepageData.ts (NEW)
+│   └── useSiteSettings.ts (NEW)
+├── lib/
+│   ├── homepage-utils.ts (NEW)
+│   └── seo.ts (NEW - Schema markup)
+└── types/
+    └── homepage.ts (NEW - TypeScript interfaces)
+```
+
+## Key Features Required
+
+### SEO Optimization
+- Proper HTML semantic structure
+- Schema.org markup for LocalBusinessDirectory
+- Meta tags for title, description, og:image
+- Structured data for businesses and locations
+- Dynamic meta tags based on site settings
+
+### Admin Customization Panel
+Add to existing admin settings page:
+- Directory name and logo upload
+- Color scheme picker (primary/secondary colors)
+- Hero section text editing (title, subtitle, description)
+- CTA button text customization
+- Toggle By State section on/off
+- By State section title/description editing
+- **Footer customization**:
+  - About text editing
+  - Contact information (email, phone)
+  - Social media links (Facebook, Twitter, LinkedIn)
+  - Toggle social media section on/off
+- Real-time preview of changes
+
+### Responsive Design
+- Mobile-first approach matching reference design
+- Gradient backgrounds and card layouts
+- Proper touch targets and spacing
+- Navigation collapse on mobile
+
+### Database Integration
+- Real-time statistics from production_businesses table
+- Top states calculation by business count
+- City counts per state
+- Efficient queries with proper indexing
+
+## TypeScript Interfaces Needed
+
+```typescript
+// types/homepage.ts
+export interface SiteSettings {
+  id: string;
+  directory_name: string;
+  logo_url?: string;
+  primary_color: string;
+  secondary_color: string;
+  hero_title: string;
+  hero_subtitle: string;
+  hero_description: string;
+  browse_all_cta: string;
+  view_top_cta: string;
+  bystate_title: string;
+  bystate_description: string;
+  show_bystate_section: boolean;
+  updated_at: string;
+}
+
+export interface HomepageStats {
+  totalBusinesses: number;
+  statesCovered: number;
+  citiesCovered: number;
+}
+
+export interface StateData {
+  state: string;
+  businessCount: number;
+  cityCount: number;
+  emoji: string;
+}
+```
+
+## Complete State Emoji Mapping
+Use this exact mapping for all US state icons:
+
+```typescript
+const STATE_EMOJIS = {
+  // A States
+  'Alabama': '🏛️',
+  'Alaska': '🏔️', 
+  'Arizona': '🌵',
+  'Arkansas': '💎',
+  
+  // C States
+  'California': '🌴',
+  'Colorado': '🏔️',
+  'Connecticut': '🌰',
+  
+  // D States
+  'Delaware': '🏛️',
+  
+  // F States
+  'Florida': '🌴',
+  
+  // G States
+  'Georgia': '🍑',
+  
+  // H States
+  'Hawaii': '🌺',
+  
+  // I States
+  'Idaho': '🏔️',
+  'Illinois': '🏢',
+  'Indiana': '🏁',
+  'Iowa': '🌽',
+  
+  // K States
+  'Kansas': '🌾',
+  'Kentucky': '🐎',
+  
+  // L States
+  'Louisiana': '⚜️',
+  
+  // M States
+  'Maine': '🦞',
+  'Maryland': '🦀',
+  'Massachusetts': '🚢',
+  'Michigan': '🚗',
+  'Minnesota': '❄️',
+  'Mississippi': '🎵',
+  'Missouri': '⭐',
+  'Montana': '🦬',
+  
+  // N States
+  'Nebraska': '🌾',
+  'Nevada': '🎰',
+  'New Hampshire': '🏔️',
+  'New Jersey': '🏖️',
+  'New Mexico': '🌶️',
+  'New York': '🗽',
+  'North Carolina': '🏔️',
+  'North Dakota': '🌾',
+  
+  // O States
+  'Ohio': '🏭',
+  'Oklahoma': '🏛️',
+  'Oregon': '🌲',
+  
+  // P States
+  'Pennsylvania': '🔔',
+  
+  // R States
+  'Rhode Island': '🏖️',
+  
+  // S States
+  'South Carolina': '🏖️',
+  'South Dakota': '🗿',
+  
+  // T States
+  'Tennessee': '🎵',
+  'Texas': '⭐',
+  
+  // U States
+  'Utah': '🏔️',
+  
+  // V States
+  'Vermont': '🍁',
+  'Virginia': '🏛️',
+  
+  // W States
+  'Washington': '☕',
+  'West Virginia': '🏔️',
+  'Wisconsin': '🧀',
+  'Wyoming': '🦌'
+};
+```
+
+## Design Requirements
+- Match the reference image exactly for layout and styling
+- Blue gradient hero background (#2563eb to #1e40af)
+- White background for By State section
+- Cards with subtle shadows and hover effects
+- Yellow accent color for statistics numbers (#f59e0b)
+- Ensure high contrast for accessibility
+- Smooth animations and transitions
+
+## Implementation Priority
+1. **Day 1**: Navigation bar and basic layout structure
+2. **Day 2**: Hero section with dynamic content and database integration
+3. **Day 3**: Statistics cards with real-time data
+4. **Day 4**: By State section with top states calculation
+5. **Day 5**: Admin customization panel and SEO optimization
+
+## Key Requirements
+- All text content must be editable via admin panel
+- Real-time data from existing production_businesses table
+- **Flexible component display**: Show States Only, Cities Only, Both, or Hide Both
+- **Red color scheme for cities section** to distinguish from blue states section
+- SEO optimized with schema markup
+- Fully responsive design
+- Integration with existing admin system
+- Color theming system with CSS custom properties
+
+Start by creating the navigation component and basic page structure, then build the hero section with database integration. Implement the By State section first, followed by the By Cities section with red styling. Focus on matching the visual design of the reference image while ensuring all content is dynamically customizable and both sections can be independently controlled by the admin.
