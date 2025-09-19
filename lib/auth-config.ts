@@ -1,17 +1,17 @@
 export const AUTH_CONFIG = Object.freeze({
-  // Auth request timeout: 3-5s (was 15s)
-  TIMEOUT_MS: 4000,
+  // Auth request timeout: Reasonable 10s for initial checks
+  TIMEOUT_MS: 10000,
 
-  // Caching auth checks: 1-5 min (was 30s)
-  CACHE_DURATION_MS: 3 * 60 * 1000, // 3 minutes
+  // Caching auth checks: Increased to 10 minutes
+  CACHE_DURATION_MS: 10 * 60 * 1000, // 10 minutes
 
-  // Session timeouts
-  IDLE_SESSION_TIMEOUT_MS: 20 * 60 * 1000, // 20 minutes
-  ABSOLUTE_SESSION_TIMEOUT_MS: 12 * 60 * 60 * 1000, // 12 hours
+  // Session timeouts - Aligned with Supabase server defaults
+  IDLE_SESSION_TIMEOUT_MS: 1 * 60 * 60 * 1000, // 1 hour idle timeout
+  ABSOLUTE_SESSION_TIMEOUT_MS: 24 * 60 * 60 * 1000, // 24 hours absolute
 
-  // Token lifetimes
-  ACCESS_TOKEN_LIFETIME_SECONDS: 10 * 60, // 10 minutes
-  REFRESH_TOKEN_LIFETIME_SECONDS: 14 * 24 * 60 * 60, // 14 days
+  // Token lifetimes - Aligned with Supabase server defaults
+  ACCESS_TOKEN_LIFETIME_SECONDS: 1 * 60 * 60, // 1 hour
+  REFRESH_TOKEN_LIFETIME_SECONDS: 30 * 24 * 60 * 60, // 30 days
 
   RETRY_ATTEMPTS: 2,
   LOG_LEVEL: process.env.NODE_ENV === "development" ? "debug" : "error",

@@ -1,0 +1,10 @@
+/* ADMIN COMPONENTS - Dark text on light backgrounds */
+.admin-layout .admin-delete-btn,
+.admin-layout .admin-delete-btn * {
+  color: black;
+}
+
+.sidebar-nav a:not([class*="bg-blue"]):not([class*="border-blue"]),
+.sidebar-nav a:not([class*="bg-blue"]):not([class*="border-blue"]) * {
+  color: #000000;
+}

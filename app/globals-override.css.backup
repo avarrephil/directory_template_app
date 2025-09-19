@@ -1,0 +1,172 @@
+/* FORCE BUTTON TEXT TO BE WHITE - MAXIMUM SPECIFICITY */
+a.bg-blue-600,
+a.bg-blue-600 span,
+a.bg-blue-600 *,
+button.bg-blue-600,
+button.bg-blue-600 span,
+button.bg-blue-600 *,
+a.bg-red-600,
+a.bg-red-600 span,
+a.bg-red-600 *,
+button.bg-red-600,
+button.bg-red-600 span,
+button.bg-red-600 *,
+a[class*="bg-blue"],
+a[class*="bg-blue"] span,
+a[class*="bg-blue"] *,
+a[class*="bg-red"],
+a[class*="bg-red"] span,
+a[class*="bg-red"] *,
+[style*="background"] span,
+[style*="background"] * {
+  color: #ffffff !important;
+  text-decoration: none !important;
+  border: none !important;
+}
+
+/* FORCE ALL FOOTER TEXT TO BE WHITE */
+footer,
+footer *,
+footer a,
+footer span,
+footer p,
+footer h1,
+footer h2,
+footer h3,
+footer h4,
+footer h5,
+footer h6,
+footer div,
+footer ul,
+footer li,
+.bg-gray-800,
+.bg-gray-800 *,
+.bg-gray-800 a,
+.bg-gray-800 span,
+.bg-gray-800 p,
+.bg-gray-800 h1,
+.bg-gray-800 h2,
+.bg-gray-800 h3,
+.bg-gray-800 div {
+  color: #ffffff !important;
+  text-decoration: none !important;
+}
+
+/* FORCE SVG ICONS TO BE WHITE */
+a.bg-blue-600 svg,
+a.bg-red-600 svg,
+button.bg-blue-600 svg,
+button.bg-red-600 svg,
+[class*="bg-blue"] svg,
+[class*="bg-red"] svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+  fill: none !important;
+}
+
+/* NUCLEAR OPTION - OVERRIDE EVERYTHING */
+.bg-blue-600,
+.bg-blue-600 *,
+.bg-red-600,
+.bg-red-600 * {
+  color: #ffffff !important;
+}
+
+/* FORCE ALL VIEW DIRECTORY BUTTONS TO HAVE WHITE TEXT */
+a.bg-blue-600,
+a.bg-blue-600 *,
+a.bg-blue-600 span,
+a.bg-blue-600 svg,
+button.bg-blue-600,
+button.bg-blue-600 *,
+button.bg-blue-600 span,
+button.bg-blue-600 svg,
+a.bg-red-600,
+a.bg-red-600 *,
+a.bg-red-600 span,
+a.bg-red-600 svg,
+button.bg-red-600,
+button.bg-red-600 *,
+button.bg-red-600 span,
+button.bg-red-600 svg,
+.bg-blue-600:not(nav *),
+.bg-blue-600:not(nav *) *,
+.bg-red-600:not(nav *),
+.bg-red-600:not(nav *) * {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+/* SPECIFIC TARGET FOR VIEW DIRECTORY TEXT */
+a[href*="browse-states"],
+a[href*="browse-states"] *,
+a[href*="browse-states"] span,
+a[href*="browse-states"] svg,
+button[class*="bg-blue"],
+button[class*="bg-blue"] *,
+button[class*="bg-red"],
+button[class*="bg-red"] * {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+/* FORCE LINK COLORS IN DARK BACKGROUNDS */
+.bg-gray-800 a:link,
+.bg-gray-800 a:visited,
+.bg-gray-800 a:hover,
+.bg-gray-800 a:active,
+footer a:link,
+footer a:visited,
+footer a:hover,
+footer a:active {
+  color: #ffffff !important;
+}
+
+/* FORCE NAVBAR LINKS TO BE BLACK - EXCEPT BUTTONS */
+nav a:not([class*="bg-blue"]),
+nav a:not([class*="bg-red"]):link,
+nav a:not([class*="bg-blue"]):visited,
+nav a:not([class*="bg-red"]):hover,
+nav a:not([class*="bg-blue"]):active,
+.bg-white a:not([class*="bg-blue"]),
+.bg-white a:not([class*="bg-red"]):link,
+.bg-white a:not([class*="bg-blue"]):visited,
+.bg-white a:not([class*="bg-red"]):hover,
+.bg-white a:not([class*="bg-blue"]):active,
+header a:not([class*="bg-blue"]),
+header a:not([class*="bg-red"]):link,
+header a:not([class*="bg-blue"]):visited,
+header a:not([class*="bg-red"]):hover,
+header a:not([class*="bg-blue"]):active {
+  color: #000000 !important;
+}
+
+/* SPECIFIC NAVBAR OVERRIDES - EXCEPT BUTTONS */
+nav[class*="bg-white"] a:not([class*="bg-blue"]),
+nav[class*="shadow"] a:not([class*="bg-blue"]),
+.border-gray-200 a:not([class*="bg-blue"]) {
+  color: #000000 !important;
+}
+
+/* ENSURE BROWSE DIRECTORY BUTTON STAYS WHITE */
+nav a[class*="bg-blue"],
+nav a.bg-blue-600,
+.bg-white a[class*="bg-blue"],
+.bg-white a.bg-blue-600,
+header a[class*="bg-blue"],
+header a.bg-blue-600 {
+  color: #ffffff !important;
+}
+
+/* ADMIN COMPONENT SPECIFIC OVERRIDES */
+/* Admin delete button - force black text */
+.admin-delete-btn,
+.admin-delete-btn * {
+  color: #000000 !important;
+}
+
+/* Admin sidebar navigation - force dark text for unfocused items */
+.admin-sidebar a:not([class*="bg-blue"]):not([class*="border-blue"]),
+.admin-sidebar a:not([class*="bg-blue"]):not([class*="border-blue"]) * {
+  color: #1f2937 !important;
+}

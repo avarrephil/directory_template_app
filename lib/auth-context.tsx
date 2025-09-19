@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import {
   getSupabaseClient,
@@ -10,6 +10,8 @@ import {
   updateActivityTimestamp,
   startSessionTimeouts,
   clearSessionTimeouts,
+  pauseSessionTimeout,
+  resumeSessionTimeout,
   type UserProfile,
   type AuthResult,
   type SignUpData,
@@ -43,6 +45,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [lastAuthCheck, setLastAuthCheck] = useState<number>(0);
   const router = useRouter();
+  const pathname = usePathname();
+
+  // Auth pages don't need loading states
+  const authPages = ["/login", "/signup", "/reset-password"];
+  const isAuthPage = authPages.includes(pathname);
 
   // Track user activity for session management
   const trackActivity = () => {
@@ -52,6 +59,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const refreshAuth = async (force: boolean = false) => {
+    // Skip loading and auth checks entirely on auth pages
+    if (isAuthPage) {
+      setLoading(false);
+      setUser(null);
+      setProfile(null);
+      return;
+    }
+
     if (shouldSkipAuthRefresh(lastAuthCheck, force)) {
       authLog.info("Skipping auth refresh (recent check)");
       setLoading(false);
@@ -70,11 +85,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setLastAuthCheck(Date.now());
       } else {
         authLog.error("getCurrentUser failed", result.error);
+        // If auth fails, clear any stale tokens
+        const supabase = getSupabaseClient();
+        await supabase.auth.signOut();
         setUser(null);
         setProfile(null);
       }
     } catch (error) {
       authLog.error("Auth refresh error", error);
+      // Clear any stale authentication state
+      try {
+        const supabase = getSupabaseClient();
+        await supabase.auth.signOut();
+      } catch (signOutError) {
+        authLog.error("Error clearing auth state", signOutError);
+      }
       setUser(null);
       setProfile(null);
     } finally {
@@ -168,6 +193,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         clearSessionTimeouts();
         setUser(null);
         setProfile(null);
+      } else if (event === "TOKEN_REFRESHED" && !session) {
+        // Handle failed token refresh - clear everything
+        authLog.warn("Token refresh failed, clearing session");
+        await supabase.auth.signOut();
+        clearSessionTimeouts();
+        setUser(null);
+        setProfile(null);
       }
       setLoading(false);
     });
@@ -185,11 +217,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       document.addEventListener(event, trackActivity, { passive: true });
     });
 
+    // Add visibility change listeners to pause/resume timeouts
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        // Tab became inactive - pause timeout
+        pauseSessionTimeout();
+      } else {
+        // Tab became active - resume timeout
+        resumeSessionTimeout();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
     return () => {
       subscription.unsubscribe();
       activityEvents.forEach((event) => {
         document.removeEventListener(event, trackActivity);
       });
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
       clearSessionTimeouts();
     };
   }, []);

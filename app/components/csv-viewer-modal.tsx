@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import type { FileId } from "@/lib/types";
+import { debounce } from "@/hooks/use-debounce";
 
 interface CSVViewerModalProps {
   fileId: FileId;
@@ -16,15 +17,6 @@ interface CSVData {
   currentPage: number;
   hasNextPage: boolean;
 }
-
-// Debounce utility function
-const debounce = (func: (...args: any[]) => void, delay: number) => {
-  let timeoutId: NodeJS.Timeout;
-  return (...args: any[]) => {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => func.apply(null, args), delay);
-  };
-};
 
 export default function CSVViewerModal({
   fileId,

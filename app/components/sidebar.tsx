@@ -13,7 +13,6 @@ const adminNavigation: NavigationItem[] = [
 
 const userNavigation: NavigationItem[] = [
   { name: "Home", href: "/user-dashboard", current: false },
-  { name: "Settings", href: "/settings", current: false },
 ];
 
 export default function Sidebar() {
@@ -37,7 +36,7 @@ export default function Sidebar() {
 
   return (
     <>
-      <div className="flex h-full w-64 flex-col bg-gray-50 border-r border-gray-200">
+      <div className="sidebar flex h-full w-64 flex-col bg-gray-50 border-r border-gray-200">
         <div className="flex flex-1 flex-col pt-8 pb-4">
           <div className="px-6 mb-8">
             <h1 className="text-2xl font-bold text-gray-900">
@@ -47,7 +46,7 @@ export default function Sidebar() {
               {profile?.role === "admin" ? "Admin Dashboard" : "User Dashboard"}
             </p>
           </div>
-          <nav className="flex-1 space-y-1 px-3">
+          <nav className="sidebar-nav flex-1 space-y-1 px-3">
             {updatedNavigation.map((item) => (
               <Link
                 key={item.name}
@@ -57,7 +56,7 @@ export default function Sidebar() {
                   ${
                     item.current
                       ? "bg-blue-100 text-blue-700 border-r-2 border-blue-600"
-                      : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                      : "text-gray-900 hover:bg-gray-100 hover:text-gray-900"
                   }
                 `}
               >

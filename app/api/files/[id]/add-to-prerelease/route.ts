@@ -5,8 +5,8 @@ import { createClient } from "@supabase/supabase-js";
 import type { FileId } from "@/lib/types";
 import { brand } from "@/lib/types";
 import { getSupabaseConfig, getFileStoragePath } from "@/lib/supabase-client";
-
-const BATCH_SIZE = 1000;
+import { processCSVToPreRelease } from "@/lib/csv-processor";
+import { updateFileStatus } from "@/lib/database-operations";
 
 export async function POST(
   request: NextRequest,
@@ -31,11 +31,14 @@ export async function POST(
         { status: 500 }
       );
     }
-    
+
     // Use service role to verify user and check admin status
     const supabaseAdmin = createClient(config.url, serviceKey);
-    
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabaseAdmin.auth.getUser(token);
     if (authError || !user) {
       return NextResponse.json(
         { success: false, error: "Invalid authentication" },
@@ -88,11 +91,19 @@ export async function POST(
     }
 
     const csvText = await response.text();
-    const result = await processCSVToPreRelease(csvText, fileId, config, serviceKey);
+    const result = await processCSVToPreRelease(csvText, fileId, {
+      url: config.url,
+      serviceKey,
+    });
 
     if (result.success) {
-      // Update file status to "added"
-      await updateFileStatusToAdded(fileId, config, serviceKey);
+      const statusResult = await updateFileStatus(fileId, "added", {
+        url: config.url,
+        serviceKey,
+      });
+      if (!statusResult.success) {
+        console.warn("Failed to update file status:", statusResult.error);
+      }
     }
 
     return NextResponse.json(result);
@@ -104,188 +115,3 @@ export async function POST(
     );
   }
 }
-
-// Reuse CSV parser from existing data route
-const parseCSVLine = (line: string): string[] => {
-  const result: string[] = [];
-  let current = "";
-  let inQuotes = false;
-  let i = 0;
-
-  while (i < line.length) {
-    const char = line[i];
-
-    if (char === '"') {
-      if (inQuotes && line[i + 1] === '"') {
-        // Escaped quote
-        current += '"';
-        i += 2;
-      } else {
-        // Toggle quote state
-        inQuotes = !inQuotes;
-        i++;
-      }
-    } else if (char === "," && !inQuotes) {
-      // Field separator
-      result.push(current.trim());
-      current = "";
-      i++;
-    } else {
-      current += char;
-      i++;
-    }
-  }
-
-  // Add final field
-  result.push(current.trim());
-
-  return result;
-};
-
-const processCSVToPreRelease = async (
-  csvText: string,
-  fileId: FileId,
-  config: ReturnType<typeof getSupabaseConfig>,
-  serviceKey: string
-): Promise<{ success: boolean; error?: string; processed?: number }> => {
-  try {
-    const lines = csvText.split("\n").filter((line) => line.trim());
-
-    if (lines.length === 0) {
-      return { success: false, error: "CSV file is empty" };
-    }
-
-    const headers = parseCSVLine(lines[0]);
-    const dataLines = lines.slice(1);
-
-    if (dataLines.length === 0) {
-      return { success: false, error: "No data rows found in CSV" };
-    }
-
-    // Expected columns from the CSV
-    const expectedColumns = [
-      "name",
-      "site",
-      "subtypes",
-      "category",
-      "type",
-      "phone",
-      "full_address",
-      "street",
-      "city",
-      "postal_code",
-      "state",
-      "us_state",
-      "country_code",
-      "latitude",
-      "longitude",
-      "rating",
-      "reviews",
-      "reviews_link",
-      "photos_count",
-      "photo",
-      "street_view",
-      "working_hours",
-      "working_hours_old_format",
-      "business_status",
-      "about",
-      "logo",
-      "owner_link",
-      "location_link",
-      "location_reviews_link",
-      "place_id",
-    ];
-
-    // Create column mapping
-    const columnMap: Record<string, number> = {};
-    expectedColumns.forEach((col) => {
-      const index = headers.findIndex(
-        (h) => h.toLowerCase() === col.toLowerCase()
-      );
-      if (index !== -1) {
-        columnMap[col] = index;
-      }
-    });
-
-    let processed = 0;
-
-    // Process in batches
-    for (let i = 0; i < dataLines.length; i += BATCH_SIZE) {
-      const batch = dataLines.slice(i, i + BATCH_SIZE);
-      const records = batch.map((line) => {
-        const values = parseCSVLine(line);
-        const record: Record<string, unknown> = { file_id: fileId };
-
-        // Map CSV columns to database columns
-        expectedColumns.forEach((col) => {
-          const index = columnMap[col];
-          record[col] =
-            index !== undefined && values[index] !== undefined
-              ? values[index]
-              : null;
-        });
-
-        return record;
-      });
-
-      // Insert batch to database using service role
-      const insertResponse = await fetch(
-        `${config.url}/rest/v1/pre_release_businesses`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            apikey: serviceKey,
-            Authorization: `Bearer ${serviceKey}`,
-            Prefer: "return=minimal",
-          },
-          body: JSON.stringify(records),
-        }
-      );
-
-      if (!insertResponse.ok) {
-        const errorText = await insertResponse.text();
-        throw new Error(
-          `Batch insert failed: ${insertResponse.status} - ${errorText}`
-        );
-      }
-
-      processed += batch.length;
-    }
-
-    return { success: true, processed };
-  } catch (error) {
-    console.error("CSV processing error:", error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Processing failed",
-    };
-  }
-};
-
-const updateFileStatusToAdded = async (
-  fileId: FileId,
-  config: ReturnType<typeof getSupabaseConfig>,
-  serviceKey: string
-): Promise<void> => {
-  const response = await fetch(
-    `${config.url}/rest/v1/uploaded_files?id=eq.${fileId}`,
-    {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        apikey: serviceKey,
-        Authorization: `Bearer ${serviceKey}`,
-      },
-      body: JSON.stringify({
-        status: "added",
-        updated_at: new Date().toISOString(),
-      }),
-    }
-  );
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Status update failed: ${response.status} - ${errorText}`);
-  }
-};

@@ -13,6 +13,13 @@
   --gray-700: #374151;
   --gray-800: #1f2937;
   --gray-900: #111827;
+
+  /* Homepage color variables */
+  --homepage-primary: #2563eb;
+  --homepage-secondary: #1e40af;
+  --homepage-accent: #f59e0b;
+  --homepage-red: #dc2626;
+  --homepage-red-light: #fef2f2;
 }
 
 @theme inline {
@@ -87,16 +94,262 @@ a:hover {
 
 /* Hide Next.js development indicator */
 [data-nextjs-toast-errors-parent] {
-  display: none !important;
+  display: none;
 }
 
 [data-turbopack-toast-errors-parent] {
-  display: none !important;
+  display: none;
 }
 
 /* Additional selectors for Next.js dev indicators */
 [data-nextjs-dialog-overlay],
 [data-nextjs-dialog-left-right-dialog],
 turbopack-mini-overlay {
-  display: none !important;
+  display: none;
+}
+
+/* Homepage Gradient Utilities */
+.homepage-gradient {
+  background: linear-gradient(
+    135deg,
+    var(--homepage-primary) 0%,
+    var(--homepage-secondary) 100%
+  );
+}
+
+.homepage-gradient-light {
+  background: linear-gradient(
+    135deg,
+    rgba(37, 99, 235, 0.1) 0%,
+    rgba(30, 64, 175, 0.1) 100%
+  );
+}
+
+/* Homepage Animation Utilities */
+@keyframes homepage-float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes homepage-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.homepage-float {
+  animation: homepage-float 6s ease-in-out infinite;
+}
+
+.homepage-pulse {
+  animation: homepage-pulse 2s ease-in-out infinite;
+}
+
+/* Homepage Component Specific Styles */
+.hero-stat-card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.hero-stat-card:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+/* State Cards */
+.state-card {
+  transition: all 0.3s ease;
+  border: 1px solid var(--gray-100);
+}
+
+.state-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  border-color: var(--homepage-primary);
+}
+
+/* City Cards */
+.city-card {
+  transition: all 0.3s ease;
+  border: 1px solid #fecaca;
+}
+
+.city-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px rgba(220, 38, 38, 0.1);
+  border-color: var(--homepage-red);
+}
+
+/* Navigation Enhancements */
+.navbar-brand {
+  transition: all 0.3s ease;
+}
+
+.navbar-brand:hover {
+  transform: scale(1.05);
+}
+
+/* Footer Enhancements */
+.footer-link {
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.footer-link::after {
+  content: "";
+  position: absolute;
+  width: 0;
+  height: 1px;
+  bottom: -2px;
+  left: 0;
+  background-color: currentColor;
+  transition: width 0.3s ease;
+}
+
+.footer-link:hover::after {
+  width: 100%;
+}
+
+/* Responsive Typography */
+@media (max-width: 640px) {
+  .hero-title {
+    font-size: 2.5rem;
+    line-height: 1.1;
+  }
+
+  .hero-subtitle {
+    font-size: 1.5rem;
+    line-height: 1.2;
+  }
+}
+
+/* Loading States */
+.loading-shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Button Standardization */
+.btn-primary,
+.btn-primary span,
+.btn-primary *,
+.btn-primary svg {
+  color: #ffffff;
+  text-decoration: none;
+  border: none;
+  stroke: #ffffff;
+}
+
+.btn-secondary,
+.btn-secondary span,
+.btn-secondary *,
+.btn-secondary svg {
+  color: #ffffff;
+  text-decoration: none;
+  border: none;
+  stroke: #ffffff;
+}
+
+/* Navigation Enhancement */
+.nav-link:not(.btn-primary):not(.btn-secondary) {
+  color: #000000;
+  text-decoration: none;
+}
+
+.nav-button {
+  color: #ffffff;
+  text-decoration: none;
+}
+
+.topbar-nav a:not(.btn-primary):not(.btn-secondary),
+.topbar-nav a:not(.btn-primary):not(.btn-secondary):link,
+.topbar-nav a:not(.btn-primary):not(.btn-secondary):visited,
+.topbar-nav a:not(.btn-primary):not(.btn-secondary):hover,
+.topbar-nav a:not(.btn-primary):not(.btn-secondary):active {
+  color: #000000;
+}
+
+/* Footer and Homepage Enhancement */
+.site-footer,
+.site-footer *,
+.site-footer a,
+.site-footer span,
+.site-footer p,
+.site-footer h1,
+.site-footer h2,
+.site-footer h3,
+.site-footer h4,
+.site-footer h5,
+.site-footer h6,
+.site-footer div,
+.site-footer ul,
+.site-footer li {
+  color: #ffffff;
+  text-decoration: none;
+}
+
+.site-footer a:link,
+.site-footer a:visited,
+.site-footer a:hover,
+.site-footer a:active {
+  color: #ffffff;
+}
+
+.bg-gray-800,
+.bg-gray-800 *,
+.bg-gray-800 a,
+.bg-gray-800 span,
+.bg-gray-800 p,
+.bg-gray-800 h1,
+.bg-gray-800 h2,
+.bg-gray-800 h3,
+.bg-gray-800 div {
+  color: #ffffff;
+  text-decoration: none;
+}
+
+.bg-gray-800 a:link,
+.bg-gray-800 a:visited,
+.bg-gray-800 a:hover,
+.bg-gray-800 a:active {
+  color: #ffffff;
+}
+
+/* Accessibility Enhancements */
+.focus-ring:focus {
+  outline: none;
+  ring: 2px solid var(--homepage-primary);
+  ring-offset: 2px;
+}
+
+/* Print Styles */
+@media print {
+  .no-print {
+    display: none;
+  }
+
+  .print-block {
+    display: block;
+  }
 }

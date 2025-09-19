@@ -10,12 +10,16 @@ type SessionTimeouts = {
   idleTimeout: NodeJS.Timeout | null;
   absoluteTimeout: NodeJS.Timeout | null;
   lastActivity: number;
+  pausedAt: number | null;
+  remainingIdleTime: number;
 };
 
 let sessionTimeouts: SessionTimeouts = {
   idleTimeout: null,
   absoluteTimeout: null,
   lastActivity: Date.now(),
+  pausedAt: null,
+  remainingIdleTime: AUTH_CONFIG.IDLE_SESSION_TIMEOUT_MS,
 };
 
 // Session timeout management
@@ -30,14 +34,50 @@ export const clearSessionTimeouts = (): void => {
   }
 };
 
+export const pauseSessionTimeout = (): void => {
+  if (sessionTimeouts.idleTimeout && !sessionTimeouts.pausedAt) {
+    // Calculate remaining time
+    const elapsed = Date.now() - sessionTimeouts.lastActivity;
+    sessionTimeouts.remainingIdleTime = Math.max(0, AUTH_CONFIG.IDLE_SESSION_TIMEOUT_MS - elapsed);
+    sessionTimeouts.pausedAt = Date.now();
+    
+    // Clear the current timeout
+    clearTimeout(sessionTimeouts.idleTimeout);
+    sessionTimeouts.idleTimeout = null;
+    
+    authLog.debug(`Session timeout paused with ${Math.round(sessionTimeouts.remainingIdleTime / 1000)}s remaining`);
+  }
+};
+
+export const resumeSessionTimeout = (): void => {
+  if (sessionTimeouts.pausedAt && !sessionTimeouts.idleTimeout) {
+    sessionTimeouts.pausedAt = null;
+    sessionTimeouts.lastActivity = Date.now();
+    
+    // Always reset to full timeout when returning from app switch
+    // This prevents immediate logout when returning after extended periods
+    sessionTimeouts.remainingIdleTime = AUTH_CONFIG.IDLE_SESSION_TIMEOUT_MS;
+    
+    sessionTimeouts.idleTimeout = setTimeout(() => {
+      authLog.warn("Session idle timeout reached, signing out");
+      signOut();
+    }, AUTH_CONFIG.IDLE_SESSION_TIMEOUT_MS);
+    
+    authLog.debug(`Session timeout resumed with full ${Math.round(AUTH_CONFIG.IDLE_SESSION_TIMEOUT_MS / 1000)}s timeout`);
+  }
+};
+
 export const updateActivityTimestamp = (): void => {
   sessionTimeouts.lastActivity = Date.now();
+  sessionTimeouts.remainingIdleTime = AUTH_CONFIG.IDLE_SESSION_TIMEOUT_MS;
+  sessionTimeouts.pausedAt = null; // Clear any paused state since we're active
 
   // Reset idle timeout
   if (sessionTimeouts.idleTimeout) {
     clearTimeout(sessionTimeouts.idleTimeout);
   }
 
+  // Always set timeout when user is active (don't check visibility here)
   sessionTimeouts.idleTimeout = setTimeout(() => {
     authLog.warn("Session idle timeout reached, signing out");
     signOut();
@@ -790,8 +830,10 @@ export const processFileToPreRelease = async (
 ): Promise<ProcessResult> => {
   try {
     const supabase = getSupabaseClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
     if (!session?.access_token) {
       return {
         success: false,
@@ -802,13 +844,16 @@ export const processFileToPreRelease = async (
     // Start processing and simulate progress
     const startTime = Date.now();
     const estimatedDuration = 30000; // Estimate 30 seconds for processing
-    
+
     // Start progress simulation
     const progressInterval = setInterval(() => {
       if (options?.onProgress) {
         const elapsed = Date.now() - startTime;
-        const percentage = Math.min(95, Math.round((elapsed / estimatedDuration) * 100));
-        
+        const percentage = Math.min(
+          95,
+          Math.round((elapsed / estimatedDuration) * 100)
+        );
+
         options.onProgress({
           loaded: percentage,
           total: 100,
@@ -822,7 +867,7 @@ export const processFileToPreRelease = async (
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${session.access_token}`,
+          Authorization: `Bearer ${session.access_token}`,
         },
       });
 
@@ -851,7 +896,10 @@ export const processFileToPreRelease = async (
       clearInterval(progressInterval);
       return {
         success: false,
-        error: error instanceof Error ? error.message : "Network error during processing",
+        error:
+          error instanceof Error
+            ? error.message
+            : "Network error during processing",
       };
     }
   } catch (error) {

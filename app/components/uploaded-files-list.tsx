@@ -177,18 +177,9 @@ export default function UploadedFilesList({
                     <span className="text-xl">📊</span>
                   </div>
                   <div className="ml-4 min-w-0 flex-1">
-                    <div className="flex items-center space-x-3">
-                      <h3 className="text-sm font-medium text-gray-900 truncate">
-                        {file.name}
-                      </h3>
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-                          file.status
-                        )}`}
-                      >
-                        {file.status}
-                      </span>
-                    </div>
+                    <h3 className="text-sm font-medium text-gray-900 truncate">
+                      {file.name}
+                    </h3>
                     <div className="flex items-center text-sm text-gray-500 mt-1 space-x-4">
                       <span className="flex items-center">
                         <span className="mr-1">📏</span>
@@ -202,12 +193,19 @@ export default function UploadedFilesList({
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
+                  <span
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
+                      file.status
+                    )}`}
+                  >
+                    {file.status}
+                  </span>
                   <button
                     type="button"
                     onClick={() => {
                       setViewingFile({ id: file.id, name: file.name });
                     }}
-                    className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    className="inline-flex items-center h-8 px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                   >
                     👁️ View
                   </button>
@@ -217,7 +215,7 @@ export default function UploadedFilesList({
                       setAddingDataFile({ id: file.id, name: file.name });
                     }}
                     disabled={file.status !== "uploaded"}
-                    className="inline-flex items-center px-3 py-1.5 border border-green-300 shadow-sm text-xs font-medium rounded text-green-700 bg-green-50 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="inline-flex items-center justify-center h-8 w-24 px-3 py-1.5 border border-green-300 shadow-sm text-xs font-medium rounded text-green-700 bg-green-50 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {file.status === "added" ? "✅ Added" : "📥 Add Data"}
                   </button>
@@ -225,7 +223,7 @@ export default function UploadedFilesList({
                     type="button"
                     onClick={() => handleDeleteFile(file.id)}
                     disabled={deleting[file.id]}
-                    className="inline-flex items-center px-3 py-1.5 border border-red-300 shadow-sm text-xs font-medium rounded text-red-700 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="admin-delete-btn inline-flex items-center h-8 px-3 py-1.5 border border-red-300 shadow-sm text-xs font-medium rounded text-black bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {deleting[file.id] ? "⏳" : "🗑️"}{" "}
                     {deleting[file.id] ? "Deleting..." : "Delete"}

@@ -12,7 +12,7 @@ export default function AuthWrapper({
   const pathname = usePathname();
 
   // Pages that should not have any auth context at all
-  const authFreePages = ["/", "/debug"];
+  const authFreePages = ["/", "/debug", "/browse-states", "/about", "/contact"];
   const isAuthFreePage = authFreePages.includes(pathname);
 
   // If it's an auth-free page, render without any auth context
